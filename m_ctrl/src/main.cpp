@@ -12,7 +12,7 @@
 
 int GPSBaud = 9600;
 
-int publishDelay = 5000;
+int publishDelay = 2500;
 unsigned long lastPublish = 0;
 
 GPS gps;
@@ -56,9 +56,7 @@ void displayInfo(GPSData gpsData);
 void loop() {
     unsigned long currentMillis = millis();
 
-    if (currentMillis - lastPublish >= publishDelay) {
-        lastPublish = currentMillis;
-    } else {
+    if (currentMillis - lastPublish < publishDelay) {
         return;
     }
 
@@ -80,9 +78,13 @@ void loop() {
         if (err != ESP_OK) {
             ESP_LOGE(TAG, "Error publishing MQTT data");
             return;
-        } else {
-            ESP_LOGI(TAG, "MQTT data published");
         }
+
+        lastPublish = currentMillis;
+        ESP_LOGI(TAG, "MQTT data published");
+
+    } else {
+        ESP_LOGW(TAG, "GPS data not received");
     }
 
     delay(100);

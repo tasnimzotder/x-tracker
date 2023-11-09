@@ -1,0 +1,36 @@
+{
+  "name": "frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@mantine/core": "^7.2.1",
+    "@mantine/hooks": "^7.2.1",
+    "@types/mapbox-gl": "^2.7.18",
+    "axios": "^1.6.0",
+    "mapbox-gl": "^2.15.0",
+    "next": "14.0.1",
+    "react": "^18",
+    "react-dom": "^18",
+    "react-icons": "^4.11.0",
+    "react-map-gl": "^7.1.6",
+    "sass": "^1.69.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "eslint": "^8",
+    "eslint-config-next": "14.0.1",
+    "postcss": "^8.4.31",
+    "postcss-preset-mantine": "^1.9.1",
+    "postcss-simple-vars": "^7.0.1",
+    "prettier": "3.0.3",
+    "typescript": "^5"
+  }
+}

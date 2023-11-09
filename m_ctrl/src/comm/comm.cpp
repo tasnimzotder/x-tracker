@@ -103,8 +103,8 @@ esp_err_t Communications::publishMQTTData(MQTTUploadData mqttUploadData) {
     StaticJsonDocument<256> doc;
     doc["latitude"] = mqttUploadData.latitude;
     doc["longitude"] = mqttUploadData.longitude;
-    doc["date"] = mqttUploadData.date;
-    doc["time"] = mqttUploadData.time;
+//    doc["date"] = mqttUploadData.date;
+//    doc["time"] = mqttUploadData.time;
     doc["deviceID"] = mqttUploadData.deviceID;
 
     String json;

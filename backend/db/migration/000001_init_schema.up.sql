@@ -14,10 +14,20 @@ CREATE TABLE "users" (
 );
 
 CREATE TABLE "device_access" (
-  "id" int PRIMARY KEY,
+  "id" bigserial PRIMARY KEY,
   "device_id" bigint NOT NULL,
   "user_id" bigint NOT NULL,
-  "permission" varchar(255) NOT NULL DEFAULT 'read'
+  "permission" varchar(255) NOT NULL DEFAULT 'view',
+  "created_at" timestamptz NOT NULL DEFAULT now(),
+  "last_updated" timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE "device_activities" (
+    "id" bigserial PRIMARY KEY,
+    "device_id" bigint NOT NULL,
+    "created_at" timestamptz NOT NULL DEFAULT now(),
+    "panic" boolean NOT NULL DEFAULT false,
+    "fall" boolean NOT NULL DEFAULT false
 );
 
 CREATE INDEX ON "device_access" ("device_id");

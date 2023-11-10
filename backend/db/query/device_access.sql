@@ -5,7 +5,7 @@ INSERT INTO device_access (
     $1, $2, $3
 ) RETURNING *;
 
--- name: GetAccessWithDeviceIDAndUserID :one
+-- name: GetAccessWithDeviceIDAndUserID :many
 SELECT * FROM device_access WHERE device_id = $1 AND user_id = $2;
 
 -- name: GetAccessWithDeviceID :many

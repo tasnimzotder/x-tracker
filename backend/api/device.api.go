@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/gin-gonic/gin"
-	"github.com/lib/pq"
+	"github.com/jackc/pgx/v5/pgconn"
 	"net/http"
 	"time"
 )
@@ -29,12 +29,14 @@ func (s *Server) createDevice(ctx *gin.Context) {
 		CreatedAt:  time.Now(),
 	}
 
-	device, err := s.querier.CreateDevice(ctx, arg)
+	device, err := s.queries.CreateDevice(ctx, arg)
+
 	if err != nil {
-		var pqErr *pq.Error
+		var pqErr *pgconn.PgError
+
 		if errors.As(err, &pqErr) {
-			switch pqErr.Code.Name() {
-			case "unique_violation":
+			switch pqErr.Code {
+			case "23505":
 				ctx.JSON(http.StatusForbidden, errorResponse(err))
 				return
 			}
@@ -66,7 +68,7 @@ func (s *Server) getDeviceByID(ctx *gin.Context) {
 		return
 	}
 
-	device, err := s.querier.GetDevice(ctx, req.ID)
+	device, err := s.queries.GetDevice(ctx, req.ID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))

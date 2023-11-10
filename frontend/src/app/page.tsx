@@ -10,17 +10,27 @@ import { formatTimeToLocaleString } from "@/utils/time.util";
 import BaseMap from "@/components/baseMap/BaseMap";
 
 export default function Home() {
-  const [locations, setLocations] = useState<locationService_t[]>([
-    {
-      lat: 28.613,
-      lon: 77.2295,
-      time: "",
-      device_id: "0",
-    },
-  ]);
+  const [locations, setLocations] = useState<
+    GeoJSON.FeatureCollection<GeoJSON.LineString>
+  >({
+    type: "FeatureCollection",
+    features: [
+      {
+        type: "Feature",
+        properties: {
+          time: "",
+          device_id: "",
+        },
+        geometry: {
+          type: "LineString",
+          coordinates: [],
+        },
+      },
+    ],
+  });
 
   const handleClick = async () => {
-    const res = await getLastLocations("test", 10);
+    const res = await getLastLocations("test", 1);
     setLocations(res);
   };
 
@@ -30,21 +40,9 @@ export default function Home() {
 
       <button onClick={handleClick}>Click me</button>
 
-      {locations.length > 0 && (
+      {locations.features[0].geometry.coordinates.length > 0 && (
         <div>
-          <div>
-            {locations[0]?.time !== "" && (
-              <span>
-                Latest location: {formatTimeToLocaleString(locations[0]?.time)}
-              </span>
-            )}
-            <br />
-            <span>Latitude: {locations[0]?.lat}</span> <br />
-            <span>Longitude: {locations[0]?.lon}</span> <br />
-            <span>Device ID: {locations[0]?.device_id}</span> <br />
-          </div>
-
-          <BaseMap lat={locations[0]?.lat} lon={locations[0]?.lon} />
+          <BaseMap data={locations} />
         </div>
       )}
     </main>

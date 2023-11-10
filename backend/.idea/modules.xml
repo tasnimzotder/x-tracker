@@ -4,8 +4,6 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/backend.iml" filepath="$PROJECT_DIR$/.idea/backend.iml" />
       <module fileurl="file://$PROJECT_DIR$/../frontend/.idea/frontend.iml" filepath="$PROJECT_DIR$/../frontend/.idea/frontend.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../../../web/go-be-bank/.idea/go-be-bank.iml" filepath="$PROJECT_DIR$/../../../web/go-be-bank/.idea/go-be-bank.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../../../web/go-be-two/.idea/go-be-two.iml" filepath="$PROJECT_DIR$/../../../web/go-be-two/.idea/go-be-two.iml" />
     </modules>
   </component>
 </project>

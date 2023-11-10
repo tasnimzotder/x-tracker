@@ -6,7 +6,7 @@ interface locationService_t {
 }
 
 const getLastLocations = async (device_id: string, limit: number) => {
-  const url: string = "http://localhost:8080/locations";
+  const url: string = "http://localhost:8080/v1/locations";
 
   const reqBody = {
     device_id: device_id,
@@ -29,7 +29,12 @@ const getLastLocations = async (device_id: string, limit: number) => {
     throw new Error("Failed to fetch locations");
   }
 
-  return (await response.json()) as locationService_t[];
+  let data =
+    (await response.json()) as GeoJSON.FeatureCollection<GeoJSON.LineString>;
+
+  console.log({ data });
+
+  return data;
 };
 
 export { getLastLocations };

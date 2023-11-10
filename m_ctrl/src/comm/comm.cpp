@@ -100,17 +100,44 @@ esp_err_t Communications::publishMQTTData(MQTTUploadData mqttUploadData) {
     esp_err_t err;
     ESP_LOGI(TAG, "Publishing MQTT data...");
 
-    StaticJsonDocument<256> doc;
-    doc["latitude"] = mqttUploadData.latitude;
-    doc["longitude"] = mqttUploadData.longitude;
-//    doc["date"] = mqttUploadData.date;
-//    doc["time"] = mqttUploadData.time;
+//    StaticJsonDocument<256> doc;
+    DynamicJsonDocument doc(256);
+
     doc["deviceID"] = mqttUploadData.deviceID;
+    doc["fallDetected"] = mqttUploadData.fallDetected;
+    doc["panicButtonPressed"] = mqttUploadData.panicButtonPressed;
+    doc["latitude"] = mqttUploadData.coordinates.latitude;
+    doc["longitude"] = mqttUploadData.coordinates.longitude;
+
 
     String json;
     serializeJson(doc, json);
 
     bool res = this->_mqttClient.publish(AWS_IOT_PUB_TOPIC, json.c_str());
+    if (!res) {
+        ESP_LOGE(TAG, "MQTT publish failed!");
+        return ESP_FAIL;
+    }
+
+    return ESP_OK;
+
+}
+
+esp_err_t Communications::publishMQTTActivity(DeviceActivity deviceActivity) {
+    esp_err_t err;
+    ESP_LOGI(TAG, "Publishing MQTT data...");
+
+    StaticJsonDocument<256> doc;
+
+    doc["deviceID"] = deviceActivity.deviceID;
+    doc["fallDetected"] = deviceActivity.fallDetected;
+    doc["panicButtonPressed"] = deviceActivity.panicButtonPressed;
+
+
+    String json;
+    serializeJson(doc, json);
+
+    bool res = this->_mqttClient.publish(AWS_IOT_PUB_TOPIC_ACTIVITY, json.c_str());
     if (!res) {
         ESP_LOGE(TAG, "MQTT publish failed!");
         return ESP_FAIL;

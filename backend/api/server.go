@@ -11,12 +11,12 @@ import (
 type Server struct {
 	Router  *gin.Engine
 	Session *session.Session
-	querier *db.Queries
+	queries *db.Queries
 }
 
-func NewServer(querier *db.Queries) *Server {
+func NewServer(queries *db.Queries) *Server {
 	server := &Server{
-		querier: querier,
+		queries: queries,
 	}
 	router := gin.Default()
 
@@ -53,7 +53,10 @@ func NewServer(querier *db.Queries) *Server {
 	router.GET("/v1/devices/id/:id", server.getDeviceByID)
 
 	//// access
-	router.POST("/access", server.createDeviceAccess)
+	router.POST("/v1/access", server.createDeviceAccess)
+
+	// mqtt listener
+	server.mqttListener()
 
 	server.Session = sess
 	server.Router = router

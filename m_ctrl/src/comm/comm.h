@@ -13,13 +13,26 @@
 #include <ArduinoJson.h>
 #include <WiFiClientSecure.h>
 
-
-struct MQTTUploadData {
+struct Coordinates {
     double latitude;
     double longitude;
-    uint32_t date;
-    uint32_t time;
+};
+
+struct MQTTUploadData {
     const char *deviceID;
+    bool fallDetected;
+    bool panicButtonPressed;
+    bool batteryLow;
+    bool isSafe;
+    uint32_t captureTime;
+    uint32_t captureDate;
+    Coordinates coordinates;
+};
+
+struct DeviceActivity {
+    int deviceID;
+    bool fallDetected;
+    bool panicButtonPressed;
 };
 
 
@@ -49,6 +62,8 @@ public:
     esp_err_t connectToMQTT();
 
     esp_err_t publishMQTTData(MQTTUploadData mqttUploadData);
+
+    esp_err_t publishMQTTActivity(DeviceActivity deviceActivity);
 
     static void messageHandler(String &topic, String &payload);
 

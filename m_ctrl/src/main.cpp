@@ -10,15 +10,102 @@
 #define TXD2 17
 #define RXD2 16
 
+#define PANIC_BUTTON 4
+
 int GPSBaud = 9600;
 
-int publishDelay = 2500;
-unsigned long lastPublish = 0;
+int publishDelay = 1000 * 10;
+int64_t lastPublish = 0;
 
 GPS gps;
 Communications comm;
 
 const char *TAG = "MAIN";
+
+bool panicButtonPressed = false;
+
+// function prototypes
+void displayInfo(GPSData gpsData);
+
+// esp task
+void task1(void *pvParameters) {
+    while (true) {
+//        read panic button (pull-up)
+        int panicButtonState = digitalRead(PANIC_BUTTON);
+
+        if (panicButtonState == LOW && !panicButtonPressed) {
+            panicButtonPressed = true;
+            ESP_LOGI(TAG, "Panic button pressed");
+
+            DeviceActivity deviceActivity = {
+                    .deviceID = (int)AWS_IOT_THING_NAME,
+                    .fallDetected = false,
+                    .panicButtonPressed = true
+            };
+
+            esp_err_t err = comm.publishMQTTActivity(deviceActivity);
+            if (err != ESP_OK) {
+                ESP_LOGE(TAG, "Error publishing MQTT activity");
+                return;
+            }
+
+            ESP_LOGI(TAG, "MQTT activity published");
+        } else if (panicButtonState == HIGH && panicButtonPressed) {
+            panicButtonPressed = false;
+            ESP_LOGI(TAG, "Panic button released");
+        }
+
+
+        vTaskDelay(
+                100 / portTICK_PERIOD_MS); // wait for one second (portTICK_PERIOD_MS is a constant defined by FreeRTOS
+    }
+}
+
+void task2(void *pvParameters) {
+    while (true) {
+        int64_t currentMillis = millis();
+
+        if (currentMillis - lastPublish < publishDelay) {
+//            return;
+            continue;
+        }
+
+        GPSData gpsData = gps.getGPSData();
+
+        if (gpsData.currentLocation) {
+            displayInfo(gpsData);
+
+            // upload data to AWS IoT
+            MQTTUploadData mqttUploadData = {
+                    .deviceID = AWS_IOT_THING_NAME,
+                    .fallDetected = false,
+                    .panicButtonPressed = panicButtonPressed,
+                    .batteryLow = false,
+                    .isSafe = true,
+                    .captureTime = gpsData.time,
+                    .captureDate = gpsData.date,
+                    .coordinates = {
+                            .latitude = gpsData.latitude,
+                            .longitude = gpsData.longitude
+                    }
+            };
+
+            esp_err_t err = comm.publishMQTTData(mqttUploadData);
+            if (err != ESP_OK) {
+                ESP_LOGE(TAG, "Error publishing MQTT data");
+//                return;
+                continue;
+            }
+
+            ESP_LOGI(TAG, "MQTT data published");
+
+            lastPublish = currentMillis;
+        }
+
+        vTaskDelay(
+                1000 / portTICK_PERIOD_MS); // wait for one second (portTICK_PERIOD_MS is a constant defined by FreeRTOS
+    }
+}
 
 
 void setup() {
@@ -46,46 +133,32 @@ void setup() {
 
     Serial.println("x-tracker-alpha");
 
+    //     set up panic button
+    pinMode(PANIC_BUTTON, INPUT_PULLUP);
+
+    //    create task
+    xTaskCreate(
+            task1,   /* Task function. */
+            "Task1",     /* String with name of task. */
+            4096,            /* Stack size in bytes. */
+            nullptr,             /* Parameter passed as input of the task */
+            1,                /* Priority of the task. */
+            nullptr);            /* Task handle. */
+
+    xTaskCreate(
+            task2,   /* Task function. */
+            "Task2",     /* String with name of task. */
+            4096,            /* Stack size in bytes. */
+            nullptr,             /* Parameter passed as input of the task */
+            1,                /* Priority of the task. */
+            nullptr);            /* Task handle. */
+
     delay(5000);
 }
 
-// function prototypes
-void displayInfo(GPSData gpsData);
-
 
 void loop() {
-    unsigned long currentMillis = millis();
 
-    if (currentMillis - lastPublish < publishDelay) {
-        return;
-    }
-
-    GPSData gpsData = gps.getGPSData();
-
-    if (gpsData.currentLocation) {
-        displayInfo(gpsData);
-
-        // upload data to AWS IoT
-        MQTTUploadData mqttUploadData = {
-                .latitude = gpsData.latitude,
-                .longitude = gpsData.longitude,
-                .date = gpsData.date,
-                .time = gpsData.time,
-                .deviceID = "x-tracker-alpha"
-        };
-
-        esp_err_t err = comm.publishMQTTData(mqttUploadData);
-        if (err != ESP_OK) {
-            ESP_LOGE(TAG, "Error publishing MQTT data");
-            return;
-        }
-
-        lastPublish = currentMillis;
-        ESP_LOGI(TAG, "MQTT data published");
-
-    } else {
-        ESP_LOGW(TAG, "GPS data not received");
-    }
 
     delay(100);
 }

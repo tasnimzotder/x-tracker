@@ -5,8 +5,6 @@
     <content url="file://$MODULE_DIR$" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="go-be-bank" />
-    <orderEntry type="module" module-name="go-be-two" />
     <orderEntry type="module" module-name="frontend" />
   </component>
 </module>

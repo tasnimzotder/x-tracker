@@ -2,9 +2,9 @@ package api
 
 import (
 	db "backend/db/sqlc"
-	"database/sql"
 	"errors"
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5"
 	"net/http"
 )
 
@@ -23,9 +23,10 @@ func (s *Server) createDeviceAccess(ctx *gin.Context) {
 	}
 
 	// check if device exists
-	_, err := s.querier.GetAccessWithDeviceID(ctx, req.DeviceID)
+	_, err := s.queries.GetUserByID(ctx, req.DeviceID)
+
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, pgx.ErrNoRows) {
 			ctx.JSON(http.StatusFailedDependency, errorResponse(err))
 			return
 		}
@@ -34,10 +35,10 @@ func (s *Server) createDeviceAccess(ctx *gin.Context) {
 		return
 	}
 
-	// check if user exists
-	_, err = s.querier.GetAccessWithUserID(ctx, req.UserID)
+	//check if user exists
+	_, err = s.queries.GetDevice(ctx, req.UserID)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, pgx.ErrNoRows) {
 			ctx.JSON(http.StatusFailedDependency, errorResponse(err))
 			return
 		}
@@ -46,15 +47,24 @@ func (s *Server) createDeviceAccess(ctx *gin.Context) {
 		return
 	}
 
-	// check if same access already exists with same device_id and user_id
-	exists, err := s.checkDuplicateAccess(ctx, req.DeviceID, req.UserID)
+	// todo
+	// check if access already exists
+	existRows, err := s.queries.GetAccessWithDeviceIDAndUserID(ctx, db.GetAccessWithDeviceIDAndUserIDParams{
+		DeviceID: req.DeviceID,
+		UserID:   req.UserID,
+	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
+		if !errors.Is(err, pgx.ErrNoRows) {
+			ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+			return
+		}
 	}
 
-	if exists {
-		ctx.JSON(http.StatusForbidden, errorResponse(err))
+	if len(existRows) > 0 {
+		ctx.JSON(http.StatusConflict, gin.H{
+			"message": "access already exists",
+		})
+
 		return
 	}
 
@@ -64,33 +74,30 @@ func (s *Server) createDeviceAccess(ctx *gin.Context) {
 		Permission: req.Permission,
 	}
 
-	deviceAccess, err := s.querier.CreateAccess(ctx, arg)
+	deviceAccess, err := s.queries.CreateAccess(ctx, arg)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
-
+	//
 	ctx.JSON(http.StatusOK, deviceAccess)
 }
 
-func (s *Server) checkDuplicateAccess(ctx *gin.Context, deviceID int64, userID int64) (exists bool, err error) {
-	arg := db.GetAccessWithDeviceIDAndUserIDParams{
-		DeviceID: deviceID,
-		UserID:   userID,
-	}
-
-	deviceAccess, err := s.querier.GetAccessWithDeviceIDAndUserID(ctx, arg)
-	if err != nil {
-		//if errors.Is(err, sql.ErrNoRows) {
-		//	return false, nil
-		//}
-
-		return false, err
-	}
-
-	if deviceAccess.ID != 0 {
-		return true, nil
-	}
-
-	return false, nil
-}
+//func (s *Server) checkDuplicateAccess(ctx *gin.Context, deviceID int64, userID int64) (exists bool, err error) {
+//	_, err = s.queries.GetAccessWithDeviceIDAndUserID(ctx, db.GetAccessWithDeviceIDAndUserIDParams{
+//		DeviceID: deviceID,
+//		UserID:   userID,
+//	})
+//
+//	if err != nil {
+//		if errors.Is(err, sql.ErrNoRows) {
+//			return false, nil
+//		}
+//
+//		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+//		return false, err
+//	}
+//
+//	ctx.JSON(http.StatusForbidden, errorResponse(err))
+//	return true, nil
+//}

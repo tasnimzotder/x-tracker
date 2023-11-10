@@ -1,10 +1,10 @@
 package api
 
 import (
+	"backend/interfaces"
 	"fmt"
 	"github.com/aws/aws-sdk-go/service/timestreamquery"
 	"github.com/gin-gonic/gin"
-	"math/rand"
 	"net/http"
 	"strconv"
 )
@@ -26,7 +26,8 @@ func (s *Server) getLastLocations(ctx *gin.Context) {
 	querySvc := timestreamquery.New(s.Session)
 
 	//queryPtr := "SELECT * FROM \"gps\" WHERE \"device_id\" = '" + req.DeviceID + "' ORDER BY time DESC LIMIT " + string(req.Limit)
-	queryPtr := fmt.Sprintf(`SELECT DISTINCT deviceID, latitude, longitude, time FROM "xtrackerDB".xtracker_table ORDER BY time DESC LIMIT %d`, req.Limit)
+	//queryPtr := fmt.Sprintf(`SELECT DISTINCT deviceID, latitude, longitude, time FROM "xtrackerDB".xtracker_table ORDER BY time DESC LIMIT %d`, req.Limit)
+	queryPtr := fmt.Sprintf(`SELECT DISTINCT deviceID, latitude, longitude, time FROM "xtrackerDB".xtracker_table WHERE time > ago(%dh) ORDER BY time DESC`, req.Limit)
 
 	queryInput := &timestreamquery.QueryInput{
 		QueryString: &queryPtr,
@@ -41,43 +42,92 @@ func (s *Server) getLastLocations(ctx *gin.Context) {
 	// return the query result
 	data := queryOutput.Rows
 
-	type getLastLocationsResponse struct {
-		DeviceID string  `json:"device_id"`
-		Lat      float32 `json:"lat"`
-		Lon      float32 `json:"lon"`
-		Time     string  `json:"time"`
+	// geojson
+	//var geoJSON GeoJSONFeatureCollection
+	//
+	//geoJSON.Type = "FeatureCollection"
+	//
+	//for _, row := range data {
+	//	var feature GeoJSONFeature
+	//	feature.Type = "Feature"
+	//	feature.Geometry.Type = "Point"
+	//	feature.Geometry.Coordinates = []float32{addRandomValues(*row.Data[2].ScalarValue), addRandomValues(*row.Data[1].ScalarValue)}
+	//	feature.Properties.DeviceID = *row.Data[0].ScalarValue
+	//	feature.Properties.Time = *row.Data[3].ScalarValue
+	//
+	//	geoJSON.Features = append(geoJSON.Features, feature)
+	//}
+
+	type GeoJSONFeatureCollection struct {
+		Type     string                                `json:"type"`
+		Features []interfaces.GeoJSONFeatureLineString `json:"features"`
 	}
 
-	var response []getLastLocationsResponse
+	// return a line geojson
+	var geoJSON GeoJSONFeatureCollection
+
+	geoJSON.Type = "FeatureCollection"
+
+	var feature interfaces.GeoJSONFeatureLineString
+	feature.Type = "Feature"
+	feature.Geometry.Type = "LineString"
 
 	for _, row := range data {
-		response = append(response, getLastLocationsResponse{
-			DeviceID: *row.Data[0].ScalarValue,
-			//Lat:      *row.Data[1].ScalarValue,
-			//Lon:      *row.Data[2].ScalarValue,
-			Lat:  addRandomValues(*row.Data[1].ScalarValue),
-			Lon:  addRandomValues(*row.Data[2].ScalarValue),
-			Time: *row.Data[3].ScalarValue,
-		})
+		coordinate := []float32{convStrToFloat(*row.Data[2].ScalarValue), convStrToFloat(*row.Data[1].ScalarValue)}
+		feature.Geometry.Coordinates = append(feature.Geometry.Coordinates, coordinate)
 
+		feature.Properties.DeviceID = *row.Data[0].ScalarValue
+		feature.Properties.Time = append(feature.Properties.Time, *row.Data[3].ScalarValue)
 	}
 
-	ctx.JSON(http.StatusOK, response)
+	geoJSON.Features = append(geoJSON.Features, feature)
+
+	ctx.JSON(http.StatusOK, geoJSON)
 }
 
-func addRandomValues(initialValue string) float32 {
-	//	convert to float
-	val, err := strconv.ParseFloat(initialValue, 64)
+type GetLastLocationResponseType struct {
+	DeviceID  string `json:"device_id"`
+	Longitude string `json:"longitude"`
+	Latitude  string `json:"latitude"`
+	Time      string `json:"time"`
+}
+
+// Todo: improve this function
+func (s *Server) GetLastLocation() (GetLastLocationResponseType, error) {
+	var rsp GetLastLocationResponseType
+
+	// get timestream data
+	querySvc := timestreamquery.New(s.Session)
+	//queryPtr := "SELECT * FROM \"gps\" WHERE \"device_id\" = '" + req.DeviceID + "' ORDER BY time DESC LIMIT " + string(req.Limit)
+	//queryPtr := fmt.Sprintf(`SELECT DISTINCT deviceID, latitude, longitude, time FROM "xtrackerDB".xtracker_table ORDER BY time DESC LIMIT %d`, req.Limit)
+	queryPtr := fmt.Sprintf(`SELECT DISTINCT deviceID, latitude, longitude, time FROM "xtrackerDB".xtracker_table ORDER BY time DESC LIMIT 1`)
+
+	queryInput := &timestreamquery.QueryInput{
+		QueryString: &queryPtr,
+	}
+
+	queryOutput, err := querySvc.Query(queryInput)
+	if err != nil {
+		//ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return rsp, err
+	}
+
+	// return the query result
+	data := queryOutput.Rows
+
+	rsp.DeviceID = *data[0].Data[0].ScalarValue
+	rsp.Longitude = *data[0].Data[2].ScalarValue
+	rsp.Latitude = *data[0].Data[1].ScalarValue
+
+	//ctx.JSON(http.StatusOK, rsp)
+	return rsp, nil
+}
+
+func convStrToFloat(value string) float32 {
+	val, err := strconv.ParseFloat(value, 64)
 	if err != nil {
 		panic(err)
 	}
-
-	//	add random value
-	val += (float64(1) - float64(2)*rand.Float64()) / float64(1000)
-
-	//	convert back to string
-	//return strconv.FormatFloat(val, 'f', 6, 64)
-	//return initialValue
 
 	return float32(val)
 }

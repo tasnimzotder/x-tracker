@@ -4,8 +4,9 @@ import (
 	"backend/api"
 	db "backend/db/sqlc"
 	"backend/utils"
-	"database/sql"
-	_ "github.com/lib/pq"
+	"context"
+	_ "github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"log"
 )
 
@@ -17,12 +18,12 @@ func main() {
 		log.Fatal("cannot load config:", err)
 	}
 
-	conn, err := sql.Open(config.DBDriver, config.DBSource)
+	connPool, err := pgxpool.New(context.Background(), config.DBSource)
 	if err != nil {
 		log.Fatal("cannot connect to db:", err)
 	}
 
-	querier := db.New(conn)
+	querier := db.New(connPool)
 
 	server := api.NewServer(querier)
 

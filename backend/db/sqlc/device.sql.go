@@ -25,7 +25,7 @@ type CreateDeviceParams struct {
 }
 
 func (q *Queries) CreateDevice(ctx context.Context, arg CreateDeviceParams) (Device, error) {
-	row := q.db.QueryRowContext(ctx, createDevice, arg.DeviceName, arg.CreatedAt, arg.Status)
+	row := q.db.QueryRow(ctx, createDevice, arg.DeviceName, arg.CreatedAt, arg.Status)
 	var i Device
 	err := row.Scan(
 		&i.ID,
@@ -41,7 +41,7 @@ SELECT id, device_name, created_at, status FROM devices WHERE id = $1
 `
 
 func (q *Queries) GetDevice(ctx context.Context, id int64) (Device, error) {
-	row := q.db.QueryRowContext(ctx, getDevice, id)
+	row := q.db.QueryRow(ctx, getDevice, id)
 	var i Device
 	err := row.Scan(
 		&i.ID,
@@ -62,7 +62,7 @@ type UpdateDeviceStatusParams struct {
 }
 
 func (q *Queries) UpdateDeviceStatus(ctx context.Context, arg UpdateDeviceStatusParams) (Device, error) {
-	row := q.db.QueryRowContext(ctx, updateDeviceStatus, arg.Status, arg.ID)
+	row := q.db.QueryRow(ctx, updateDeviceStatus, arg.Status, arg.ID)
 	var i Device
 	err := row.Scan(
 		&i.ID,

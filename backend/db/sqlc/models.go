@@ -16,10 +16,20 @@ type Device struct {
 }
 
 type DeviceAccess struct {
-	ID         int32  `json:"id"`
-	DeviceID   int64  `json:"device_id"`
-	UserID     int64  `json:"user_id"`
-	Permission string `json:"permission"`
+	ID          int64     `json:"id"`
+	DeviceID    int64     `json:"device_id"`
+	UserID      int64     `json:"user_id"`
+	Permission  string    `json:"permission"`
+	CreatedAt   time.Time `json:"created_at"`
+	LastUpdated time.Time `json:"last_updated"`
+}
+
+type DeviceActivity struct {
+	ID        int64     `json:"id"`
+	DeviceID  int64     `json:"device_id"`
+	CreatedAt time.Time `json:"created_at"`
+	Panic     bool      `json:"panic"`
+	Fall      bool      `json:"fall"`
 }
 
 type User struct {

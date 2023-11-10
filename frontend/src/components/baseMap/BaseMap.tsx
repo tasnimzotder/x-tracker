@@ -12,15 +12,18 @@ const TOKEN: string =
   "pk.eyJ1IjoidGFzbmltem90ZGVyIiwiYSI6ImNsb3BrNnk1eTBiYngyanM4dHZqZXA4MWMifQ.Gvrhme69_5PTIp3zGd85TQ";
 
 interface BaseMapProps {
-  lat: number;
-  lon: number;
+  data: GeoJSON.FeatureCollection<GeoJSON.LineString>;
 }
 
 const BaseMap = (props: BaseMapProps) => {
   const mapContainer = useRef(null);
   const map = useRef<mapboxgl.Map>(null);
-  const [lng, setLng] = useState(props.lon);
-  const [lat, setLat] = useState(props.lat);
+  const [lng, setLng] = useState(
+    props.data.features[0].geometry.coordinates[0][0],
+  );
+  const [lat, setLat] = useState(
+    props.data.features[0].geometry.coordinates[0][1],
+  );
   const [zoom, setZoom] = useState(16);
 
   useEffect(() => {
@@ -37,14 +40,14 @@ const BaseMap = (props: BaseMapProps) => {
       zoom: zoom,
     }) as mapboxgl.Map;
 
-    // map.current.addControl(
-    //   new mapboxgl.GeolocateControl({
-    //     positionOptions: {
-    //       enableHighAccuracy: true,
-    //     },
-    //     trackUserLocation: true,
-    //   }),
-    // );
+    map.current.addControl(
+      new mapboxgl.GeolocateControl({
+        positionOptions: {
+          enableHighAccuracy: true,
+        },
+        trackUserLocation: true,
+      }),
+    );
 
     // @ts-ignore
     map.current.on("move", () => {
@@ -55,45 +58,51 @@ const BaseMap = (props: BaseMapProps) => {
       // @ts-ignore
       setZoom(map.current.getZoom().toFixed(2));
     });
+
+    map.current.on("load", () => {
+      // @ts-ignore
+      map.current.addSource("route", {
+        type: "geojson",
+        data: props.data,
+      });
+
+      // @ts-ignore
+      map.current.addLayer({
+        id: "route",
+        type: "line",
+        source: "route",
+        layout: {
+          "line-join": "round",
+          "line-cap": "round",
+        },
+        paint: {
+          "line-color": "#888",
+          "line-width": 2,
+        },
+      });
+    });
   }, []);
+
+  useEffect(() => {
+    //  add layer from geojson
+    if (!map.current) return;
+
+    if (map.current.getLayer("route")) {
+      // @ts-ignore
+      map.current.getSource("route").setData(props.data);
+    }
+  }, [props.data]);
 
   let marker: mapboxgl.Marker;
 
-  useEffect(() => {
-    // @ts-ignore
-    map.current.setCenter([props.lon, props.lat]);
+  // useEffect(() => {
+  //   // @ts-ignore
+  //   map.current.setCenter([props.lon, props.lat]);
 
-    // if (markers.length > 0) {
-    //   // @ts-ignore
-    //   markers[markers.length - 1].remove();
-    // }
-
-    // marker?.remove();
-
-    marker = new mapboxgl.Marker({
-      color: "#ff0000",
-      draggable: false,
-    })
-      .setLngLat([props.lon, props.lat])
-      // @ts-ignore
-      .addTo(map.current);
-
-    // markers = [];
-    // markers.push(marker_1);
-
-    // marker_1.remove();
-
-    // remove all markers
-    // let n_markers = markers.length;
-
-    // for (let i = 0; i < n_markers - 1; i++) {
-    //   markers[i].remove();
-    // }
-
-    setLng(props.lon);
-    setLat(props.lat);
-    setZoom(16);
-  }, [props.lat, props.lon]);
+  //   setLng(props.lon);
+  //   setLat(props.lat);
+  //   setZoom(16);
+  // }, [props.lat, props.lon]);
 
   // useEffect(() => {
   //   // @ts-ignore

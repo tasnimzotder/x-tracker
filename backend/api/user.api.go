@@ -2,10 +2,10 @@ package api
 
 import (
 	db "backend/db/sqlc"
-	"database/sql"
 	"errors"
 	"github.com/gin-gonic/gin"
-	"github.com/lib/pq"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"net/http"
 	"time"
 )
@@ -38,12 +38,12 @@ func (s *Server) createUser(ctx *gin.Context) {
 		CreatedAt:      time.Now(),
 	}
 
-	user, err := s.querier.CreateUser(ctx, arg)
+	user, err := s.queries.CreateUser(ctx, arg)
 	if err != nil {
-		var pqErr *pq.Error
+		var pqErr *pgconn.PgError
 		if errors.As(err, &pqErr) {
-			switch pqErr.Code.Name() {
-			case "unique_violation":
+			switch pqErr.Code {
+			case "23505":
 				ctx.JSON(http.StatusForbidden, errorResponse(err))
 				return
 			}
@@ -82,9 +82,9 @@ func (s *Server) getUserByID(ctx *gin.Context) {
 		return
 	}
 
-	user, err := s.querier.GetUserByID(ctx, req.ID)
+	user, err := s.queries.GetUserByID(ctx, req.ID)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, pgx.ErrNoRows) {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
 			return
 		}

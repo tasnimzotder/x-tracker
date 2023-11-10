@@ -7,4 +7,10 @@ monitor:
 runx:
 	pio run -t upload && pio run -t monitor
 
-.PHONY: upload monitor runx
+clear:
+	pio run -t clean
+
+test:
+	pio test -e native
+
+.PHONY: upload monitor runx clear test

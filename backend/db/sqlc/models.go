@@ -6,13 +6,20 @@ package db
 
 import (
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Device struct {
-	ID         int64     `json:"id"`
-	DeviceName string    `json:"device_name"`
-	CreatedAt  time.Time `json:"created_at"`
-	Status     string    `json:"status"`
+	ID            int64     `json:"id"`
+	DeviceKey     uuid.UUID `json:"device_key"`
+	DeviceName    string    `json:"device_name"`
+	CreatedAt     time.Time `json:"created_at"`
+	Status        string    `json:"status"`
+	LastUpdatedAt time.Time `json:"last_updated_at"`
+	UserGroup     string    `json:"user_group"`
+	DeviceVersion string    `json:"device_version"`
 }
 
 type DeviceAccess struct {
@@ -33,9 +40,15 @@ type DeviceActivity struct {
 }
 
 type User struct {
-	ID             int64     `json:"id"`
-	Username       string    `json:"username"`
-	HashedPassword string    `json:"hashed_password"`
-	Email          string    `json:"email"`
-	CreatedAt      time.Time `json:"created_at"`
+	ID             int64       `json:"id"`
+	Username       string      `json:"username"`
+	HashedPassword string      `json:"hashed_password"`
+	Email          string      `json:"email"`
+	CreatedAt      time.Time   `json:"created_at"`
+	LastUpdatedAt  time.Time   `json:"last_updated_at"`
+	PhoneNumber    pgtype.Int8 `json:"phone_number"`
+	CountryCode    pgtype.Int4 `json:"country_code"`
+	FirstName      pgtype.Text `json:"first_name"`
+	LastName       pgtype.Text `json:"last_name"`
+	PostalCode     pgtype.Int8 `json:"postal_code"`
 }

@@ -1,3 +1,4 @@
+
 interface locationService_t {
   device_id: string;
   lat: number;

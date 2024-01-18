@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="dd6b9a6e-6407-4a31-856f-610e96abd832" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/../backend/db/migration/000001_init_schema.up.sql" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/db/migration/000001_init_schema.up.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../backend/db/query/user.sql" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/db/query/user.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../backend/db/sqlc/device.sql.go" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/db/sqlc/device.sql.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../backend/db/sqlc/models.go" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/db/sqlc/models.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../backend/db/sqlc/querier.go" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/db/sqlc/querier.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../backend/db/sqlc/user.sql.go" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/db/sqlc/user.sql.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../backend/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/go.mod" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../backend/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/go.sum" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/frontend.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/frontend.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/services/location.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/services/location.service.ts" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 5
+}</component>
+  <component name="ProjectId" id="2Y1tmci2rZBq4Ul7QMySzd0MBu5" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;dev&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/0xtasnim/Developments/projects-alpha/x-tracker/x-tracker-alpha/frontend&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;yarn&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;copyright&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;/Users/0xtasnim/Developments/projects-alpha/x-tracker/x-tracker-alpha/frontend/node_modules/typescript/lib&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  }
+}</component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="dd6b9a6e-6407-4a31-856f-610e96abd832" name="Changes" comment="" />
+      <created>1699705073724</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1699705073724</updated>
+      <workItem from="1699705074730" duration="399000" />
+      <workItem from="1700223616313" duration="170000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>

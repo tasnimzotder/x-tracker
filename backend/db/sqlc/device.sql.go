@@ -15,7 +15,7 @@ INSERT INTO devices (
     device_name, created_at, status
 ) VALUES (
     $1, $2, $3
-) RETURNING id, device_name, created_at, status
+) RETURNING id, device_key, device_name, created_at, status, last_updated_at, user_group, device_version
 `
 
 type CreateDeviceParams struct {
@@ -29,15 +29,19 @@ func (q *Queries) CreateDevice(ctx context.Context, arg CreateDeviceParams) (Dev
 	var i Device
 	err := row.Scan(
 		&i.ID,
+		&i.DeviceKey,
 		&i.DeviceName,
 		&i.CreatedAt,
 		&i.Status,
+		&i.LastUpdatedAt,
+		&i.UserGroup,
+		&i.DeviceVersion,
 	)
 	return i, err
 }
 
 const getDevice = `-- name: GetDevice :one
-SELECT id, device_name, created_at, status FROM devices WHERE id = $1
+SELECT id, device_key, device_name, created_at, status, last_updated_at, user_group, device_version FROM devices WHERE id = $1
 `
 
 func (q *Queries) GetDevice(ctx context.Context, id int64) (Device, error) {
@@ -45,15 +49,19 @@ func (q *Queries) GetDevice(ctx context.Context, id int64) (Device, error) {
 	var i Device
 	err := row.Scan(
 		&i.ID,
+		&i.DeviceKey,
 		&i.DeviceName,
 		&i.CreatedAt,
 		&i.Status,
+		&i.LastUpdatedAt,
+		&i.UserGroup,
+		&i.DeviceVersion,
 	)
 	return i, err
 }
 
 const updateDeviceStatus = `-- name: UpdateDeviceStatus :one
-UPDATE devices SET status = $1 WHERE id = $2 RETURNING id, device_name, created_at, status
+UPDATE devices SET status = $1 WHERE id = $2 RETURNING id, device_key, device_name, created_at, status, last_updated_at, user_group, device_version
 `
 
 type UpdateDeviceStatusParams struct {
@@ -66,9 +74,13 @@ func (q *Queries) UpdateDeviceStatus(ctx context.Context, arg UpdateDeviceStatus
 	var i Device
 	err := row.Scan(
 		&i.ID,
+		&i.DeviceKey,
 		&i.DeviceName,
 		&i.CreatedAt,
 		&i.Status,
+		&i.LastUpdatedAt,
+		&i.UserGroup,
+		&i.DeviceVersion,
 	)
 	return i, err
 }

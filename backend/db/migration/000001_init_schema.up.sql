@@ -1,8 +1,12 @@
 CREATE TABLE "devices" (
   "id" bigserial PRIMARY KEY,
+  "device_key" uuid NOT NULL,
   "device_name" varchar(255) NOT NULL UNIQUE,
   "created_at" timestamptz NOT NULL DEFAULT now(),
-  "status" varchar(255) NOT NULL DEFAULT 'offline'
+  "status" varchar(255) NOT NULL DEFAULT 'offline',
+  "last_updated_at" timestamptz NOT NULL DEFAULT now(),
+  "user_group" varchar(255) NOT NULL DEFAULT 'default',
+  "device_version" varchar(255) NOT NULL DEFAULT '0.0.1'
 );
 
 CREATE TABLE "users" (
@@ -10,7 +14,13 @@ CREATE TABLE "users" (
   "username" varchar(255) NOT NULL UNIQUE,
   "hashed_password" varchar(255) NOT NULL UNIQUE,
   "email" varchar(255) NOT NULL,
-  "created_at" timestamptz NOT NULL DEFAULT now()
+  "created_at" timestamptz NOT NULL DEFAULT now(),
+  "last_updated_at" timestamptz NOT NULL DEFAULT now(),
+  "phone_number" bigint,
+  "country_code" int DEFAULT 91,
+  "first_name" varchar(255),
+  "last_name" varchar(255),
+  "postal_code" bigint
 );
 
 CREATE TABLE "device_access" (

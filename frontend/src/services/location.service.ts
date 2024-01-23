@@ -5,8 +5,8 @@ interface locationService_t {
   time: string;
 }
 
-const getLastLocations = async (device_id: string, limit: number) => {
-  const url: string = "http://localhost:8080/v1/locations";
+const getLastLocations = async (device_id: number, limit: number) => {
+  const url: string = `${process.env.NEXT_PUBLIC_API_URL}/v1/locations/get`;
 
   const reqBody = {
     device_id: device_id,

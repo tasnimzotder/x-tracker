@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "edge_device"
+		},
+		{
+			"path": "backend"
+		},
+		{
+			"path": "frontend"
+		}
+	],
+	"settings": {}
+}

@@ -4,7 +4,7 @@ import "./globals.css";
 
 import "@mantine/core/styles.css";
 
-import { MantineProvider, ColorSchemeScript } from "@mantine/core";
+import { ColorSchemeScript, MantineProvider } from "@mantine/core";
 import Header from "@/components/header/Header";
 import Footer from "@/components/footer/Footer";
 
@@ -27,8 +27,10 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <MantineProvider>
-          <Header />
-          {children}
+          <div className={""}>
+            <Header />
+            {children}
+          </div>
           <Footer />
         </MantineProvider>
       </body>

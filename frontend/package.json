@@ -10,12 +10,13 @@
   },
   "dependencies": {
     "@mantine/core": "^7.2.1",
-    "@mantine/hooks": "^7.2.1",
+    "@mantine/form": "^7.4.2",
+    "@mantine/hooks": "^7.4.2",
     "@types/mapbox-gl": "^2.7.18",
     "axios": "^1.6.0",
     "geojson": "^0.5.0",
     "mapbox-gl": "^2.15.0",
-    "next": "14.0.1",
+    "next": "^14.1.0",
     "react": "^18",
     "react-dom": "^18",
     "react-icons": "^4.11.0",
@@ -31,7 +32,7 @@
     "postcss": "^8.4.31",
     "postcss-preset-mantine": "^1.9.1",
     "postcss-simple-vars": "^7.0.1",
-    "prettier": "3.0.3",
+    "prettier": "3.2.4",
     "typescript": "^5"
   }
 }

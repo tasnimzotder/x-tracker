@@ -1,12 +1,13 @@
 package main
 
 import (
-	"backend/api"
-	db "backend/db/sqlc"
-	"backend/utils"
 	"context"
-	_ "github.com/jackc/pgx/v5"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/tasnimzotder/x-tracker/api"
+	db "github.com/tasnimzotder/x-tracker/db/sqlc"
+	"github.com/tasnimzotder/x-tracker/utils"
 	"log"
 )
 
@@ -18,17 +19,24 @@ func main() {
 		log.Fatal("cannot load config:", err)
 	}
 
-	connPool, err := pgxpool.New(context.Background(), config.DBSource)
+	//	aws session
+	aws_session, err := session.NewSession(&aws.Config{
+		Region: aws.String("us-east-1"),
+	})
 	if err != nil {
-		log.Fatal("cannot connect to db:", err)
+		log.Fatalf("failed to create aws session: %v", err)
 	}
 
-	querier := db.New(connPool)
-
-	server := api.NewServer(querier)
-
-	err = server.Start(":8080")
+	connPool, err := pgxpool.New(context.Background(), config.DBSource)
 	if err != nil {
-		panic(err)
+		log.Fatalf("failed to connect to database: %v", err)
+	}
+
+	queries := db.New(connPool)
+	server := api.NewServer(aws_session, queries)
+
+	err = server.Start(config.ServerAddress)
+	if err != nil {
+		log.Fatal("cannot start server:", err)
 	}
 }

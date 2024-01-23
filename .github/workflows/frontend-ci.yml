@@ -14,10 +14,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        working-directory: ./frontend
-
     strategy:
       matrix:
         node-version: [16.x, 18.x]
@@ -32,7 +28,10 @@ jobs:
           cache: 'yarn'
       - name: Install dependencies
         run: yarn install --frozen-lockfile
+        working-directory: ./frontend
       - name: Lint
         run: yarn lint
+        working-directory: ./frontend
       - name: Build
         run: yarn build
+        working-directory: ./frontend

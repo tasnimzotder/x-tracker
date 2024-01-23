@@ -1,47 +1,41 @@
 CREATE TABLE "devices" (
-  "id" bigserial PRIMARY KEY,
-  "device_key" uuid NOT NULL,
-  "device_name" varchar(255) NOT NULL UNIQUE,
-  "created_at" timestamptz NOT NULL DEFAULT now(),
-  "status" varchar(255) NOT NULL DEFAULT 'offline',
-  "last_updated_at" timestamptz NOT NULL DEFAULT now(),
-  "user_group" varchar(255) NOT NULL DEFAULT 'default',
-  "device_version" varchar(255) NOT NULL DEFAULT '0.0.1'
+    "id" bigserial PRIMARY KEY,
+    "user_id" BIGINT NOT NULL,
+    "device_key" uuid NOT NULL,
+    "device_name" varchar(255) NOT NULL UNIQUE,
+    "status" VARCHAR(255) NOT NULL DEFAULT 'active',
+    "created_at" timestamptz NOT NULL DEFAULT now(),
+    "updated_at" timestamptz NOT NULL DEFAULT now(),
+    "last_seen" timestamptz NOT NULL DEFAULT now(),
+    "device_type" VARCHAR(255) NOT NULL DEFAULT 'unknown',
+    "device_version" VARCHAR(255) NOT NULL DEFAULT 'unknown'
 );
 
 CREATE TABLE "users" (
-  "id" bigserial PRIMARY KEY,
-  "username" varchar(255) NOT NULL UNIQUE,
-  "hashed_password" varchar(255) NOT NULL UNIQUE,
-  "email" varchar(255) NOT NULL,
-  "created_at" timestamptz NOT NULL DEFAULT now(),
-  "last_updated_at" timestamptz NOT NULL DEFAULT now(),
-  "phone_number" bigint,
-  "country_code" int DEFAULT 91,
-  "first_name" varchar(255),
-  "last_name" varchar(255),
-  "postal_code" bigint
-);
-
-CREATE TABLE "device_access" (
-  "id" bigserial PRIMARY KEY,
-  "device_id" bigint NOT NULL,
-  "user_id" bigint NOT NULL,
-  "permission" varchar(255) NOT NULL DEFAULT 'view',
-  "created_at" timestamptz NOT NULL DEFAULT now(),
-  "last_updated" timestamptz NOT NULL DEFAULT now()
+    "id" bigserial PRIMARY KEY,
+    "username" VARCHAR(255) NOT NULL UNIQUE,
+    "hashed_password" VARCHAR(255) NOT NULL,
+    "email" VARCHAR(255) NOT NULL UNIQUE,
+    "created_at" timestamptz NOT NULL DEFAULT now(),
+    "updated_at" timestamptz NOT NULL DEFAULT now(),
+    "status" VARCHAR(255) NOT NULL DEFAULT 'active',
+    "role" VARCHAR(255) NOT NULL DEFAULT 'user',
+    "phone_number" BIGINT,
+    "country_code" INT DEFAULT 91,
+    "first_name" VARCHAR(255),
+    "last_name" VARCHAR(255),
+    "postal_code" VARCHAR(255)
 );
 
 CREATE TABLE "device_activities" (
     "id" bigserial PRIMARY KEY,
-    "device_id" bigint NOT NULL,
+    "device_id" BIGINT NOT NULL,
     "created_at" timestamptz NOT NULL DEFAULT now(),
-    "panic" boolean NOT NULL DEFAULT false,
-    "fall" boolean NOT NULL DEFAULT false
+    "activity_type" VARCHAR(255) NOT NULL,
+    "activity_data" JSONB NOT NULL
 );
 
-CREATE INDEX ON "device_access" ("device_id");
-CREATE INDEX ON "device_access" ("user_id");
+CREATE INDEX ON "device_activities" ("device_id");
 
-ALTER TABLE "device_access" ADD FOREIGN KEY ("device_id") REFERENCES "devices" ("id");
-ALTER TABLE "device_access" ADD  FOREIGN KEY ("user_id") REFERENCES "users" ("id");
+ALTER TABLE "devices" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
+ALTER TABLE "device_activities" ADD FOREIGN KEY ("device_id") REFERENCES "devices" ("id");

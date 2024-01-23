@@ -1,18 +1,18 @@
 package api
 
 import (
-	db "backend/db/sqlc"
-	"database/sql"
 	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgconn"
+	db "github.com/tasnimzotder/x-tracker/db/sqlc"
+	"github.com/tasnimzotder/x-tracker/utils"
 	"net/http"
 	"time"
 )
 
 type createDeviceRequest struct {
 	DeviceName string `json:"device_name" binding:"required"`
-	Status     string `json:"status" binding:"required"`
+	UserID     int    `json:"user_id" binding:"required"`
 }
 
 func (s *Server) createDevice(ctx *gin.Context) {
@@ -23,14 +23,31 @@ func (s *Server) createDevice(ctx *gin.Context) {
 		return
 	}
 
+	if req.UserID <= 0 {
+		ctx.JSON(http.StatusBadRequest, errorResponse(
+			errors.New("user id must be greater than zero"),
+		))
+		return
+	}
+
+	//check if user exists
+	_, err := s.queries.GetUser(ctx, int64(req.UserID))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(
+			errors.New("user not found"),
+		))
+		return
+	}
+
 	arg := db.CreateDeviceParams{
 		DeviceName: req.DeviceName,
-		Status:     req.Status,
+		UserID:     int64(req.UserID),
+		DeviceKey:  utils.GenerateUUID(),
+		Status:     "active",
 		CreatedAt:  time.Now(),
 	}
 
 	device, err := s.queries.CreateDevice(ctx, arg)
-
 	if err != nil {
 		var pqErr *pgconn.PgError
 
@@ -46,38 +63,32 @@ func (s *Server) createDevice(ctx *gin.Context) {
 		return
 	}
 
-	//rsp := createDeviceResponse{
-	//	DeviceName: device.DeviceName,
-	//	Status:     device.Status,
-	//	CreatedAt:  device.CreatedAt,
-	//	ID:         device.ID,
-	//}
-
 	ctx.JSON(http.StatusOK, device)
 }
 
-type getDeviceByIDRequest struct {
-	ID int64 `uri:"id" binding:"required,min=1"`
-}
-
-func (s *Server) getDeviceByID(ctx *gin.Context) {
-	var req getDeviceByIDRequest
-
-	if err := ctx.ShouldBindUri(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+func (s *Server) getDeviceByUserID(ctx *gin.Context) {
+	userID := ctx.Param("user_id")
+	if userID == "" {
+		ctx.JSON(http.StatusBadRequest, errorResponse(
+			errors.New("user id is required"),
+		),
+		)
 		return
 	}
 
-	device, err := s.queries.GetDevice(ctx, req.ID)
+	parsedUserID, err := utils.ParseInt(userID)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			ctx.JSON(http.StatusNotFound, errorResponse(err))
-			return
-		}
+		ctx.JSON(http.StatusBadRequest, errorResponse(
+			errors.New("user id must be a number"),
+		))
+		return
+	}
 
+	devices, err := s.queries.GetDevicesByUser(ctx, int64(parsedUserID))
+	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
 
-	ctx.JSON(http.StatusOK, device)
+	ctx.JSON(http.StatusOK, devices)
 }

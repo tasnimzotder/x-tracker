@@ -1,26 +1,31 @@
 package api
 
 import (
-	db "backend/db/sqlc"
 	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+	db "github.com/tasnimzotder/x-tracker/db/sqlc"
+	"github.com/tasnimzotder/x-tracker/utils"
 	"net/http"
 	"time"
 )
 
 type createUserRequest struct {
 	Username string `json:"username" binding:"required,alphanum"`
-	Password string `json:"password" binding:"required,min=6"`
 	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required,min=6"`
 }
 
-type createUserResponse struct {
+type userResponse struct {
+	ID        int64     `json:"id"`
 	Username  string    `json:"username"`
 	Email     string    `json:"email"`
-	CreatedAt time.Time `json:"created_at"`
-	ID        int64     `json:"id"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
+	FirstName string    `json:"firstName"`
+	LastName  string    `json:"lastName"`
+	Role      string    `json:"role"`
 }
 
 func (s *Server) createUser(ctx *gin.Context) {
@@ -34,8 +39,9 @@ func (s *Server) createUser(ctx *gin.Context) {
 	arg := db.CreateUserParams{
 		Username:       req.Username,
 		Email:          req.Email,
-		HashedPassword: req.Password,
+		HashedPassword: req.Password, // todo: hash the password
 		CreatedAt:      time.Now(),
+		Role:           "user",
 	}
 
 	user, err := s.queries.CreateUser(ctx, arg)
@@ -53,36 +59,31 @@ func (s *Server) createUser(ctx *gin.Context) {
 		return
 	}
 
-	rsp := createUserResponse{
+	rsp := userResponse{
+		ID:        user.ID,
 		Username:  user.Username,
 		Email:     user.Email,
 		CreatedAt: user.CreatedAt,
-		ID:        user.ID,
 	}
 
 	ctx.JSON(http.StatusOK, rsp)
 }
 
-type getUserByIDRequest struct {
-	ID int64 `uri:"id" binding:"required,min=1"`
-}
-
-type getUserByIDResponse struct {
-	ID        int64     `json:"id"`
-	Username  string    `json:"username"`
-	Email     string    `json:"email"`
-	CreatedAt time.Time `json:"created_at"`
-}
-
 func (s *Server) getUserByID(ctx *gin.Context) {
-	var req getUserByIDRequest
+	id := ctx.Param("id")
 
-	if err := ctx.ShouldBindUri(&req); err != nil {
+	if id == "" {
+		ctx.JSON(http.StatusBadRequest, errorResponse(errors.New("id is required")))
+		return
+	}
+
+	idInt, err := utils.ParseInt(id)
+	if err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
-	user, err := s.queries.GetUserByID(ctx, req.ID)
+	user, err := s.queries.GetUser(ctx, int64(idInt))
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
@@ -93,12 +94,99 @@ func (s *Server) getUserByID(ctx *gin.Context) {
 		return
 	}
 
-	rsp := getUserByIDResponse{
+	res := userResponse{
 		ID:        user.ID,
 		Username:  user.Username,
 		Email:     user.Email,
 		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+		FirstName: user.FirstName.String,
+		LastName:  user.LastName.String,
+		Role:      user.Role,
 	}
 
-	ctx.JSON(http.StatusOK, rsp)
+	ctx.JSON(http.StatusOK, res)
+}
+
+func (s *Server) getUserByUsername(ctx *gin.Context) {
+	username := ctx.Param("username")
+
+	if username == "" {
+		ctx.JSON(http.StatusBadRequest, errorResponse(errors.New("username is required")))
+		return
+	}
+
+	user, err := s.queries.GetUserByUsername(ctx, username)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	res := userResponse{
+		ID:        user.ID,
+		Username:  user.Username,
+		Email:     user.Email,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+		FirstName: user.FirstName.String,
+		LastName:  user.LastName.String,
+		Role:      user.Role,
+	}
+
+	ctx.JSON(http.StatusOK, res)
+}
+
+func (s *Server) getAllUsers(ctx *gin.Context) {
+	limit := ctx.Query("limit")
+	offset := ctx.Query("offset")
+
+	if limit == "" {
+		limit = "10"
+	}
+
+	if offset == "" {
+		offset = "0"
+	}
+
+	limitInt, err := utils.ParseInt(limit)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	offsetInt, err := utils.ParseInt(offset)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	users, err := s.queries.ListUsers(ctx, db.ListUsersParams{
+		Limit:  int32(limitInt),
+		Offset: int32(offsetInt),
+	})
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	res := make([]userResponse, 0)
+	for _, user := range users {
+		res = append(res, userResponse{
+			ID:        user.ID,
+			Username:  user.Username,
+			Email:     user.Email,
+			CreatedAt: user.CreatedAt,
+			UpdatedAt: user.UpdatedAt,
+			FirstName: user.FirstName.String,
+			LastName:  user.LastName.String,
+			Role:      user.Role,
+		})
+	}
+
+	ctx.JSON(http.StatusOK, res)
 }

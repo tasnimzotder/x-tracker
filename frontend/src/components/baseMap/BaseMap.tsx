@@ -8,8 +8,7 @@ import mapboxgl from "mapbox-gl";
 import styles from "./BaseMap.module.scss";
 import { Card } from "@mantine/core";
 
-const TOKEN: string =
-  "pk.eyJ1IjoidGFzbmltem90ZGVyIiwiYSI6ImNsb3BrNnk1eTBiYngyanM4dHZqZXA4MWMifQ.Gvrhme69_5PTIp3zGd85TQ";
+const TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN as string;
 
 interface BaseMapProps {
   data: GeoJSON.FeatureCollection<GeoJSON.LineString>;
@@ -58,30 +57,7 @@ const BaseMap = (props: BaseMapProps) => {
       // @ts-ignore
       setZoom(map.current.getZoom().toFixed(2));
     });
-
-    map.current.on("load", () => {
-      // @ts-ignore
-      map.current.addSource("route", {
-        type: "geojson",
-        data: props.data,
-      });
-
-      // @ts-ignore
-      map.current.addLayer({
-        id: "route",
-        type: "line",
-        source: "route",
-        layout: {
-          "line-join": "round",
-          "line-cap": "round",
-        },
-        paint: {
-          "line-color": "#888",
-          "line-width": 2,
-        },
-      });
-    });
-  }, []);
+  }, [zoom, props.data, lat, lng]);
 
   useEffect(() => {
     //  add layer from geojson
@@ -93,21 +69,29 @@ const BaseMap = (props: BaseMapProps) => {
     }
   }, [props.data]);
 
-  let marker: mapboxgl.Marker;
+  useEffect(() => {
+    //  add layer from geojson
+    if (!map.current) return;
 
-  // useEffect(() => {
-  //   // @ts-ignore
-  //   map.current.setCenter([props.lon, props.lat]);
+    if (map.current.getLayer("route")) {
+      // @ts-ignore
+      map.current.getSource("route").setData(props.data);
+    }
 
-  //   setLng(props.lon);
-  //   setLat(props.lat);
-  //   setZoom(16);
-  // }, [props.lat, props.lon]);
-
-  // useEffect(() => {
-  //   // @ts-ignore
-  //   map.current.setCenter([lng, lat]);
-  // }, [lat, lng, zoom]);
+    // Add marker to the latest location
+    if (props.data && props.data.features.length > 0) {
+      const latestLocation =
+        props.data.features[props.data.features.length - 1];
+      const marker = new mapboxgl.Marker()
+        .setLngLat([lng, lat])
+        .addTo(map.current)
+        .setPopup(
+          new mapboxgl.Popup({ offset: 25 }).setHTML(
+            `<h3>Latest location</h3>`,
+          ),
+        );
+    }
+  }, [props.data]);
 
   return (
     <div className={styles.container}>

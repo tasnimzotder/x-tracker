@@ -1,3 +1,5 @@
+BUILD_DIR=bin
+
 postgres:
 	docker run --name pg-xtracker -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=secret -d postgres
 
@@ -22,3 +24,11 @@ sqlc:
 serve:
 	go run main.go
 
+test:
+	go test ./... -v -cover -count=1
+
+build:
+	go build -o ./$(BUILD_DIR)/backend.bin
+
+run:
+	./$(BUILD_DIR)/backend.bin

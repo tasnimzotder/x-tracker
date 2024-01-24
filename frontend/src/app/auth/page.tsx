@@ -20,7 +20,7 @@ import { useRouter } from "next/navigation";
 // import { GoogleButton } from "./GoogleButton";
 // import { TwitterButton } from "./TwitterButton";
 
-export function AuthenticationForm(props: PaperProps) {
+const AuthenticationForm = () => {
   const [type, toggle] = useToggle(["login", "register"]);
   const form = useForm({
     initialValues: {
@@ -61,7 +61,7 @@ export function AuthenticationForm(props: PaperProps) {
   };
 
   return (
-    <Paper radius="md" w={"50%"} m={"auto"} p="xl" withBorder {...props}>
+    <Paper radius="md" w={"50%"} m={"auto"} p="xl" withBorder>
       <Text size="lg" fw={500}>
         Welcome to xTracker, {type} with
       </Text>
@@ -148,6 +148,6 @@ export function AuthenticationForm(props: PaperProps) {
       </form>
     </Paper>
   );
-}
+};
 
 export default AuthenticationForm;

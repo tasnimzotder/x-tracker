@@ -103,3 +103,4 @@ fabric.properties
 *.env
 certs/
 **/bin/
+db-data/

@@ -1,34 +1,51 @@
 services:
   server:
     image: $ECR_REGISTRY/x-tracker-be
+#    build:
+#      context: .
+#      target: final
     environment:
       - SERVER_ADDRESS=0.0.0.0:8080
-      - DB_SOURCE=postgresql://root:secret@localhost:5432/xtracker?sslmode=disable
+#      - DB_SOURCE="postgresql://root:secret@db:5432/xtracker?sslmode=disable"
     ports:
       - 8080:8080
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - xtracker-be
   db:
-     image: postgres
+     image: postgres:16-alpine
      restart: always
-     user: postgres
+#     user: postgres
 #     secrets:
 #       - db-password
      volumes:
-       - db-data:/var/lib/postgresql/data
+       - ./db-data:/var/lib/postgresql/data
+       - ./initdb/:/docker-entrypoint-initdb.d/
      environment:
-       - POSTGRES_DB=xtracker
        - POSTGRES_PASSWORD=secret
+       - POSTGRES_USER=root
+#       - PGUSER=root
+       - POSTGRES_DATA=/var/lib/postgresql/data
+       - POSTGRES_DB=xtracker
      expose:
        - 5432
+     ports:
+       - 5432:5432
      healthcheck:
        test: [ "CMD", "pg_isready" ]
        interval: 10s
        timeout: 5s
        retries: 5
-volumes:
-   db-data:
+     networks:
+       - xtracker-be
+#volumes:
+#   db-data:
+
+networks:
+  xtracker-be:
+
 #secrets:
 #   db-password:
 #     secretsfile: db/password.txt

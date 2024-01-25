@@ -19,3 +19,11 @@
         owner: admin
         group: admin
         mode: 0755
+
+    - name: Copy backend initdb/ files
+      copy:
+        src: ./../../backend/initdb/
+        dest: /home/admin/initdb/
+        owner: admin
+        group: admin
+        mode: 0755

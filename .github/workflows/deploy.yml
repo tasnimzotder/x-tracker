@@ -11,54 +11,54 @@ permissions:
   contents: read
 
 jobs:
-  deploy_ecr_fe:
-    name: Deploy Container Frontend
-    runs-on: ubuntu-latest
-    environment: production
-    env:
-      ECR_REPOSITORY: x-tracker-fe
-      CONTAINER_NAME: xtracker-fe
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+ deploy_ecr_fe:
+   name: Deploy Container Frontend
+   runs-on: ubuntu-latest
+   environment: production
+   env:
+     ECR_REPOSITORY: x-tracker-fe
+     CONTAINER_NAME: xtracker-fe
+   steps:
+     - name: Checkout
+       uses: actions/checkout@v3
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+     - name: Configure AWS credentials
+       uses: aws-actions/configure-aws-credentials@v1
+       with:
+         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+         aws-region: ${{ env.AWS_REGION }}
 
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+     - name: Login to Amazon ECR
+       id: login-ecr
+       uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Build, tag, and push image to Amazon ECR
-        id: build-image
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: latest
+     - name: Build, tag, and push image to Amazon ECR
+       id: build-image
+       env:
+         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+         IMAGE_TAG: latest
 
-        run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./frontend
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+       run: |
+         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./frontend
+         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+         echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
-      - name: Pull to EC2 instance
-        uses: appleboy/ssh-action@v1.0.3
-        id: ssh-ec2
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: latest
-        with:
-          host: ${{ secrets.EC2_HOST_FE }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 22
-          script_stop: true
-          envs: AWS_REGION,ECR_REGISTRY,ECR_REPOSITORY,CONTAINER_NAME,IMAGE_TAG
-          script: |
-            ./run_container.sh $AWS_REGION $ECR_REGISTRY $CONTAINER_NAME $ECR_REPOSITORY $IMAGE_TAG
+     - name: Pull to EC2 instance
+       uses: appleboy/ssh-action@v1.0.3
+       id: ssh-ec2
+       env:
+         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+         IMAGE_TAG: latest
+       with:
+         host: ${{ secrets.EC2_HOST_FE }}
+         username: ${{ secrets.EC2_USERNAME }}
+         key: ${{ secrets.SSH_PRIVATE_KEY }}
+         port: 22
+         script_stop: true
+         envs: AWS_REGION,ECR_REGISTRY,ECR_REPOSITORY,CONTAINER_NAME,IMAGE_TAG
+         script: |
+           ./run_container.sh $AWS_REGION $ECR_REGISTRY $CONTAINER_NAME $ECR_REPOSITORY $IMAGE_TAG
 
   deploy_ecr_be:
     name: Deploy Container Backend

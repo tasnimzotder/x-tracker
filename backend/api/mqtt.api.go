@@ -78,5 +78,4 @@ func (s *Server) messageHandler(client mqtt.Client, msg mqtt.Message) {
 	if sosMessage.PanicButtonPressed || sosMessage.FallDetected {
 		// todo
 	}
-
 }

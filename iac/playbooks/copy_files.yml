@@ -1,0 +1,21 @@
+- name:  Copy the container running script
+  hosts: all
+  become: true
+  remote_user: admin
+
+  tasks:
+    - name: Copy the container running script - frontend
+      copy:
+        src: scripts/run_container.sh
+        dest: /home/admin/run_container.sh
+        owner: admin
+        group: admin
+        mode: 0755
+
+    - name: Copy backend compose.yaml file
+      copy:
+        src: ./../../backend/compose.yaml
+        dest: /home/admin/compose.yaml
+        owner: admin
+        group: admin
+        mode: 0755

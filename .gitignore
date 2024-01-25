@@ -2,3 +2,4 @@
 iac/.terraform.lock.hcl
 iac/playbooks/inventory.ini
 act.env
+**/.secrets

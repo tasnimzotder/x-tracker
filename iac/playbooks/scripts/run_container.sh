@@ -18,7 +18,7 @@ if [[ $CONTAINER_NAME == *"fe"* ]]; then
 
   docker pull $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
-  docker run -d -p 80:3000 --name $CONTAINER_NAME \
+  docker run -d -p 80:3000 -e NEXT_PUBLIC_API_URL=http://172.31.91.108:8080 --name $CONTAINER_NAME \
     $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
 # if container name contains "be"

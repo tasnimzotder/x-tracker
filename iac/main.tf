@@ -31,10 +31,6 @@ locals {
     {
       name          = "be",
       instance_type = "t2.micro"
-    },
-    {
-      name          = "db",
-      instance_type = "t2.micro"
     }
   ]
 }
@@ -50,24 +46,7 @@ resource "aws_instance" "x-tracker-instances" {
     cpu_credits = "unlimited"
   }
 
-  iam_instance_profile = aws_iam_instance_profile.ec2_ecr_access.name
-
-  #  provisioner "remote-exec" {
-  #    inline = [
-  #      "sudo apt update -y"
-  #    ]
-  #
-  #    connection {
-  #      host        = self.public_dns
-  #      type        = "ssh"
-  #      user        = "admin"
-  #      private_key = file("~/.ssh/id_rsa")
-  #    }
-  #  }
-
-  #  provisioner "local-exec" {
-  #    command = "ansible-playbook -u root -i admin@${aws_instance.x-tracker-instances[count.index].public_dns}, -o StrictHostKeyChecking=no playbooks/setup_ec2_all.yml"
-  #  }
+  iam_instance_profile = aws_iam_instance_profile.ec2_ecr_timestream_access_profile.name
 
   tags = {
     Name = "xtracker-${local.instances[count.index].name}"

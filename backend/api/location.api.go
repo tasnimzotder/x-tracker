@@ -1,8 +1,9 @@
 package api
 
 import (
+	"context"
 	"fmt"
-	"github.com/aws/aws-sdk-go/service/timestreamquery"
+	"github.com/aws/aws-sdk-go-v2/service/timestreamquery"
 	"github.com/gin-gonic/gin"
 	"github.com/tasnimzotder/x-tracker/interfaces"
 	"github.com/tasnimzotder/x-tracker/utils"
@@ -24,7 +25,7 @@ func (s *Server) getLastLocations(ctx *gin.Context) {
 	}
 
 	// get timestream data
-	querySvc := timestreamquery.New(s.AWS_Session)
+	querySvc := timestreamquery.NewFromConfig(s.AWS_Config)
 
 	//queryPtr := fmt.Sprintf(`SELECT DISTINCT deviceID, latitude, longitude, time FROM "xtrackerDB".xtracker_table WHERE time > ago(%dh) ORDER BY time DESC`, req.Limit)
 	//queryPtr := fmt.Sprintf(`SELECT DISTINCT deviceID, latitude, longitude, time FROM "xtrackerDB".xtracker_table ORDER BY time DESC LIMIT %d`, req.Limit)
@@ -34,7 +35,7 @@ func (s *Server) getLastLocations(ctx *gin.Context) {
 		QueryString: &queryPtr,
 	}
 
-	queryOutput, err := querySvc.Query(queryInput)
+	queryOutput, err := querySvc.Query(context.Background(), queryInput)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return

@@ -1,22 +1,22 @@
 package api
 
 import (
-	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	db "github.com/tasnimzotder/x-tracker/db/sqlc"
 )
 
 type Server struct {
-	Router      *gin.Engine
-	AWS_Session *session.Session
-	queries     *db.Queries
+	Router     *gin.Engine
+	AWS_Config aws.Config
+	queries    *db.Queries
 }
 
-func NewServer(session *session.Session, queries *db.Queries) *Server {
+func NewServer(cfg aws.Config, queries *db.Queries) *Server {
 	server := &Server{
-		AWS_Session: session,
-		queries:     queries,
+		AWS_Config: cfg,
+		queries:    queries,
 	}
 
 	router := gin.Default()

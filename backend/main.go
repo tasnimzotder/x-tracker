@@ -2,8 +2,7 @@ package main
 
 import (
 	"context"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/spf13/viper"
 	"github.com/tasnimzotder/x-tracker/api"
@@ -22,12 +21,10 @@ func main() {
 
 	println(viper.GetString("SERVER_ADDRESS"))
 
-	//	aws session
-	aws_session, err := session.NewSession(&aws.Config{
-		Region: aws.String("us-east-1"),
-	})
+	//aws_session := session.Must(session.NewSession())
+	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
-		log.Fatalf("failed to create aws session: %v", err)
+		log.Fatal(err)
 	}
 
 	connPool, err := pgxpool.New(context.Background(), viper.GetString("DB_SOURCE"))
@@ -36,7 +33,7 @@ func main() {
 	}
 
 	queries := db.New(connPool)
-	server := api.NewServer(aws_session, queries)
+	server := api.NewServer(cfg, queries)
 
 	err = server.Start(viper.GetString("SERVER_ADDRESS"))
 	if err != nil {

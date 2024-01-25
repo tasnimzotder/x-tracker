@@ -69,8 +69,11 @@ USER appuser
 # Copy the executable from the "build" stage.
 COPY --from=build /bin/server /bin/
 
+ENV SERVER_ADDRESS=0.0.0.0:8080
+ENV DB_SOURCE=$DB_SOURCE
+
 # Expose the port that the application listens on.
-EXPOSE 80
+EXPOSE 8080
 
 # What the container should run when it is started.
 ENTRYPOINT [ "/bin/server" ]

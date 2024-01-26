@@ -1,15 +1,21 @@
 ---
 - name: Set up EC2 instance for frontend
-  hosts: all
+  hosts: instances
   become: true
   remote_user: admin
 
   tasks:
+    - name: Update apt cache
+      become: true
+      apt:
+        update_cache: true
+
     - name: Install aptitude
       apt:
         name: aptitude
         state: latest
         update_cache: true
+      register: result
 
     - name: Install required system packages
       apt:
@@ -39,12 +45,17 @@
         update_cache: true
 
     - name: Add Docker group
-      ansible.builtin.group:
+      group:
         name: docker
         state: present
 
     - name: Add user to Docker group
+      become: true
       user:
         name: "{{ ansible_user }}"
-        group: docker
+        groups: docker
         append: true
+
+    - name: Reset ssh connection to allow user changes to affect ansible user
+      meta:
+        reset_connection

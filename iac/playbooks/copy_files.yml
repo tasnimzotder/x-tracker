@@ -1,5 +1,5 @@
 - name:  Copy the container running script
-  hosts: all
+  hosts: instances
   become: true
   remote_user: admin
 
@@ -27,3 +27,4 @@
         owner: admin
         group: admin
         mode: 0755
+

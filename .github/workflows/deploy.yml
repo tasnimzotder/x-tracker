@@ -99,13 +99,14 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: latest
+          NEXT_PUBLIC_MAPBOX_TOKEN: ${{ secrets.NEXT_PUBLIC_MAPBOX_TOKEN }}
         with:
           host: ${{ secrets.EC2_HOST_BE }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script_stop: true
-          envs: AWS_REGION,ECR_REGISTRY,ECR_REPOSITORY,CONTAINER_NAME,IMAGE_TAG
+          envs: AWS_REGION,ECR_REGISTRY,ECR_REPOSITORY,CONTAINER_NAME,IMAGE_TAG,NEXT_PUBLIC_MAPBOX_TOKEN
           script: |
-            ./run_container.sh $AWS_REGION $ECR_REGISTRY $CONTAINER_NAME $ECR_REPOSITORY $IMAGE_TAG
+            ./run_container.sh $AWS_REGION $ECR_REGISTRY $CONTAINER_NAME $ECR_REPOSITORY $IMAGE_TAG $NEXT_PUBLIC_MAPBOX_TOKEN
 

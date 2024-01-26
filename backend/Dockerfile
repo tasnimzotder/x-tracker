@@ -71,6 +71,7 @@ COPY --from=build /bin/server /bin/
 
 ENV SERVER_ADDRESS=0.0.0.0:8080
 ENV DB_SOURCE="postgresql://root:secret@db:5432/xtracker?sslmode=disable"
+ENV AWS_REGION=us-east-1
 
 # Expose the port that the application listens on.
 EXPOSE 8080

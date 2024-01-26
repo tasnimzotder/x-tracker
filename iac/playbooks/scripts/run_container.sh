@@ -5,8 +5,9 @@ ECR_REGISTRY=$2
 CONTAINER_NAME=$3
 ECR_REPOSITORY=$4
 IMAGE_TAG=$5
+NEXT_PUBLIC_MAPBOX_TOKEN=$6
 
-aws ecr get-login-password --region "$AWS_REGION" | \
+aws ecr get-login-password --region $AWS_REGION | \
     docker login --username AWS --password-stdin $ECR_REGISTRY
 
 # if container name contains "fe"
@@ -18,7 +19,10 @@ if [[ $CONTAINER_NAME == *"fe"* ]]; then
 
   docker pull $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
-  docker run -d -p 80:3000 -e NEXT_PUBLIC_API_URL=http://172.31.91.108:8080 --name $CONTAINER_NAME \
+  docker run -d -p 80:3000 \
+    -e NEXT_PUBLIC_API_URL=http://172.31.32.95:8080 \
+    -e NEXT_PUBLIC_MAPBOX_TOKEN=$NEXT_PUBLIC_MAPBOX_TOKEN \
+    --name $CONTAINER_NAME \
     $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
 # if container name contains "be"

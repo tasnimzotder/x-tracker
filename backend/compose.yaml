@@ -1,6 +1,6 @@
 services:
   server:
-    image: $ECR_REGISTRY/x-tracker-be
+    image: $ECR_REGISTRY/x-tracker-be:latest
 #    build:
 #      context: .
 #      target: final
@@ -21,13 +21,13 @@ services:
 #     secrets:
 #       - db-password
      volumes:
-       - ./db-data:/var/lib/postgresql/data
-       - ./initdb/:/docker-entrypoint-initdb.d/
+       - ./db-data/:/var/lib/postgresql
+#       - ./initdb/:/docker-entrypoint-initdb.d/
      environment:
        - POSTGRES_PASSWORD=secret
        - POSTGRES_USER=root
 #       - PGUSER=root
-       - POSTGRES_DATA=/var/lib/postgresql/data
+#       - POSTGRES_DATA=/var/lib/postgresql/data
        - POSTGRES_DB=xtracker
      expose:
        - 5432

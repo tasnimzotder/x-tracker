@@ -35,7 +35,7 @@ func (s *Server) getLastLocations(ctx *gin.Context) {
 		QueryString: &queryPtr,
 	}
 
-	queryOutput, err := querySvc.Query(context.Background(), queryInput)
+	queryOutput, err := querySvc.Query(context.TODO(), queryInput)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return

@@ -2,7 +2,7 @@
 
 data "aws_iam_policy_document" "ecr_read_access" {
   statement {
-    effect  = "Allow"
+    effect = "Allow"
     actions = [
       "ecr:GetAuthorizationToken",
       "ecr:BatchCheckLayerAvailability",
@@ -43,7 +43,7 @@ data "aws_iam_policy_document" "ec2_assume_role_policy" {
 
 data "aws_iam_policy_document" "timestream_read_access" {
   statement {
-    effect  = "Allow"
+    effect = "Allow"
     actions = [
       "timestream:*",
       "kms:DescribeKey",

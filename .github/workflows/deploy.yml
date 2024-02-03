@@ -3,6 +3,8 @@ name: Deploy to AWS
 on:
   push:
     branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
 env:
   AWS_REGION: us-east-1
@@ -11,8 +13,8 @@ permissions:
   contents: read
 
 jobs:
-  deploy_ecr_fe:
-    name: Deploy Container Frontend
+  build_ecr_fe:
+    name: Build Image Frontend
     runs-on: ubuntu-latest
     environment: production
     env:
@@ -44,24 +46,8 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
-      - name: Pull to EC2 instance
-        uses: appleboy/ssh-action@v1.0.3
-        id: ssh-ec2
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: latest
-        with:
-          host: ${{ secrets.EC2_HOST_FE }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 22
-          script_stop: true
-          envs: AWS_REGION,ECR_REGISTRY,ECR_REPOSITORY,CONTAINER_NAME,IMAGE_TAG
-          script: |
-            ./run_container.sh $AWS_REGION $ECR_REGISTRY $CONTAINER_NAME $ECR_REPOSITORY $IMAGE_TAG
-
-  deploy_ecr_be:
-    name: Deploy Container Backend
+  build_ecr_be:
+    name: Build Image Backend
     runs-on: ubuntu-latest
     environment: production
     env:
@@ -93,13 +79,18 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
-      - name: Pull to EC2 instance
+  run_application:
+    name: Run Application
+    needs: [ build_ecr_fe, build_ecr_be ]
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Run the application
         uses: appleboy/ssh-action@v1.0.3
         id: ssh-ec2
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: latest
-          NEXT_PUBLIC_MAPBOX_TOKEN: ${{ secrets.NEXT_PUBLIC_MAPBOX_TOKEN }}
         with:
           host: ${{ secrets.EC2_HOST_BE }}
           username: ${{ secrets.EC2_USERNAME }}
@@ -107,5 +98,4 @@ jobs:
           port: 22
           script_stop: true
           script: |
-            sh deploy-helper.sh
-
+            sudo sh deploy-helper.sh

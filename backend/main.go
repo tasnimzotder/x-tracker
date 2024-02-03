@@ -19,7 +19,7 @@ func main() {
 		log.Fatal("cannot load config:", err)
 	}
 
-	println(viper.GetString("SERVER_ADDRESS"))
+	println(viper.GetString("DB_SOURCE"))
 
 	//aws_session := session.Must(session.NewSession())
 	cfg, err := config.LoadDefaultConfig(context.TODO())
@@ -27,7 +27,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	connPool, err := pgxpool.New(context.Background(), viper.GetString("DB_SOURCE"))
+	//connPool, err := pgxpool.New(context.Background(), viper.Get("DB_SOURCE").(string))
+	connPool, err := pgxpool.New(context.Background(), "postgresql://root:secret@db:5432/xtracker?sslmode=disable")
 	if err != nil {
 		log.Fatalf("failed to connect to database: %v", err)
 	}
@@ -35,7 +36,7 @@ func main() {
 	queries := db.New(connPool)
 	server := api.NewServer(cfg, queries)
 
-	err = server.Start(viper.GetString("SERVER_ADDRESS"))
+	err = server.Start(":8080")
 	if err != nil {
 		log.Fatal("cannot start server:", err)
 	}

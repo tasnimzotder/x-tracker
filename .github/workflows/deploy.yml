@@ -106,7 +106,6 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script_stop: true
-          envs: AWS_REGION,ECR_REGISTRY,ECR_REPOSITORY,CONTAINER_NAME,IMAGE_TAG,NEXT_PUBLIC_MAPBOX_TOKEN
           script: |
-            ./run_container.sh $AWS_REGION $ECR_REGISTRY $CONTAINER_NAME $ECR_REPOSITORY $IMAGE_TAG $NEXT_PUBLIC_MAPBOX_TOKEN
+            sh deploy-helper.sh
 

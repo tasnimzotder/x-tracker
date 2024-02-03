@@ -12,8 +12,8 @@ locals {
 resource "aws_ecr_repository" "x-tracker-repo-fe" {
   count = length(local.container_repos)
   name  = local.container_repos[count.index].name
-
   image_tag_mutability = "MUTABLE"
+  force_delete = false
 
   image_scanning_configuration {
     scan_on_push = true

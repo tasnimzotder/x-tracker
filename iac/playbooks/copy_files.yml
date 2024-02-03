@@ -6,7 +6,7 @@
   tasks:
     - name: Copy the container running script - frontend
       copy:
-        src: scripts/run_container.sh
+        src: ../../deploy.sh
         dest: /home/admin/run_container.sh
         owner: admin
         group: admin
@@ -14,7 +14,7 @@
 
     - name: Copy backend compose.yaml file
       copy:
-        src: ./../../backend/compose.yaml
+        src: ../../compose.yaml
         dest: /home/admin/compose.yaml
         owner: admin
         group: admin

@@ -1,6 +1,6 @@
 ---
 - name: Set up EC2 instance for frontend
-  hosts: instances
+  hosts: all
   become: true
   remote_user: admin
 

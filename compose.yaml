@@ -1,0 +1,61 @@
+services:
+  server:
+    image: $ECR_REGISTRY/$ECR_REPOSITORY_BE:$IMAGE_TAG
+    # build:
+    #   context: ./backend
+    #   target: final
+    container_name: "server"
+    environment:
+      AWS_REGION: $AWS_REGION
+      DB_SOURCE: $DB_SOURCE
+      GIN_MODE: $GIN_MODE
+    ports:
+      - 8080:8080
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - xtracker-be
+  db:
+     image: postgres:16-alpine
+     restart: always
+     container_name: "db"
+     volumes:
+       - $DB_VOLUME_HOST:/var/lib/postgresql/data
+     environment:
+       POSTGRES_PASSWORD: $DB_PASSWORD
+       POSTGRES_USER: "root"
+       POSTGRES_DB: "xtracker"
+       TZ: "UTC"
+     expose:
+       - 5432
+     ports:
+       - 5432:5432
+     healthcheck:
+       test: [ "CMD", "pg_isready" ]
+       interval: 10s
+       timeout: 5s
+       retries: 5
+     networks:
+       - xtracker-be
+
+  frontend:
+    image: $ECR_REGISTRY/$ECR_REPOSITORY_FE:$IMAGE_TAG
+    # build:
+    #   context:
+    #     ./frontend
+    #   target: final
+    container_name: "frontend"
+    environment:
+      NEXT_PUBLIC_API_URL: $NEXT_PUBLIC_API_URL
+    ports:
+      - 80:3000
+    depends_on:
+      server:
+        condition: service_started
+    networks:
+      - xtracker-be
+
+networks:
+  xtracker-be:
+

@@ -1,46 +1,40 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 4.16"
-    }
-
-    local = {
-      source = "hashicorp/local"
-    }
-  }
-
-  required_version = ">= 1.2.0"
-}
-
-provider "aws" {
-  region = "us-east-1"
-}
-
 resource "aws_key_pair" "ssh_key" {
   key_name   = "ssh_key"
   public_key = file("~/.ssh/id_rsa.pub")
 }
 
-locals {
-  instances = [
-    {
-      name          = "fe",
-      instance_type = "t2.micro"
-    },
-    {
-      name          = "be",
-      instance_type = "t2.micro"
-    }
-  ]
+
+# EBS
+resource "aws_ebs_volume" "xt-ebs" {
+  availability_zone = "us-east-1a"
+  size              = 20
+  type              = "gp3"
+  encrypted         = false
+
+  tags = {
+    Name = "xt-ebs"
+  }
 }
 
+resource "aws_volume_attachment" "xt-ebs-attach" {
+  device_name = "/dev/sdf"
+  volume_id   = aws_ebs_volume.xt-ebs.id
+  instance_id = aws_instance.xt-be.id
+}
 
-resource "aws_instance" "x-tracker-instances" {
-  ami           = "ami-058bd2d568351da34"
-  instance_type = local.instances[count.index].instance_type
-  key_name      = aws_key_pair.ssh_key.key_name
-  count         = length(local.instances)
+# EC2 instances
+resource "aws_instance" "xt-be" {
+  ami               = "ami-058bd2d568351da34"
+  instance_type     = "t2.micro"
+  key_name          = aws_key_pair.ssh_key.key_name
+  #  count         = length(local.instances)
+  availability_zone = "us-east-1a"
+
+  #  associate_public_ip_address = true
+  subnet_id              = aws_subnet.xt-public-subnets[0].id
+  vpc_security_group_ids = [
+    aws_security_group.xt-web-sg.id
+  ]
 
   credit_specification {
     cpu_credits = "unlimited"
@@ -49,15 +43,16 @@ resource "aws_instance" "x-tracker-instances" {
   iam_instance_profile = aws_iam_instance_profile.ec2_ecr_timestream_access_profile.name
 
   tags = {
-    Name = "xtracker-${local.instances[count.index].name}"
+    Name = "xt-be"
   }
 }
 
 
-output "instances_pub_dns_addresses" {
-  value = {
-    for instance in aws_instance.x-tracker-instances :
-    instance.tags.Name => instance.public_dns
-  }
+output "ec2_instance_be" {
+#  value = {
+#    dns_addresses = aws_instance.xt-be.*.public_dns
+#  }
+
+  value = aws_instance.xt-be.public_dns
 }
 

@@ -78,9 +78,11 @@ fabric.properties
 .idea/caches/build_file_checksums.ser
 
 **/*.env
+**/*.env.local
 iac/.terraform.lock.hcl
 iac/playbooks/inventory.ini
 act.env
 **/.secrets
 .idea/
 .idea/aws.xml
+db-data

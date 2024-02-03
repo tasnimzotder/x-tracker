@@ -98,4 +98,4 @@ jobs:
           port: 22
           script_stop: true
           script: |
-            sh deploy-helper.sh
+            sudo sh deploy-helper.sh

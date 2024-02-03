@@ -10,10 +10,10 @@ resource "aws_vpc" "xt" {
 }
 
 resource "aws_subnet" "xt-public-subnets" {
-  count             = length(var.xt-public-subnet-ciders)
-  vpc_id            = aws_vpc.xt.id
-  cidr_block        = element(var.xt-public-subnet-ciders, count.index)
-  availability_zone = "us-east-1a"
+  count                   = length(var.xt-public-subnet-ciders)
+  vpc_id                  = aws_vpc.xt.id
+  cidr_block              = element(var.xt-public-subnet-ciders, count.index)
+  availability_zone       = "us-east-1a"
   map_public_ip_on_launch = true
 
   tags = {
@@ -80,11 +80,26 @@ resource "aws_security_group" "xt-web-sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-#  temporary for testing; port 5432
+  #  temporary for testing; port 5432
   ingress {
     from_port   = 5432
     to_port     = 5432
     protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  #  temporary for testing; port 80
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port = 8080
+    to_port = 8080
+    protocol = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 

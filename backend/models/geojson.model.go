@@ -1,4 +1,4 @@
-package interfaces
+package models
 
 // type GeoJSONFeaturePoint struct {
 // 	Type     string `json:"type"`

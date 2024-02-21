@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgtype"
 	db "github.com/tasnimzotder/x-tracker/db/sqlc"
 	"github.com/tasnimzotder/x-tracker/utils"
 	"net/http"
@@ -186,6 +187,72 @@ func (s *Server) getAllUsers(ctx *gin.Context) {
 			LastName:  user.LastName.String,
 			Role:      user.Role,
 		})
+	}
+
+	ctx.JSON(http.StatusOK, res)
+}
+
+type updateUserRequest struct {
+	ID        int64  `json:"id"`
+	Username  string `json:"username"`
+	Email     string `json:"email"`
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
+}
+
+func (s *Server) updateUser(ctx *gin.Context) {
+	var req updateUserRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	userOld, err := s.queries.GetUser(ctx, req.ID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	arg := db.UpdateUserParams{
+		ID:       req.ID,
+		Username: req.Username,
+		Email:    req.Email,
+		FirstName: pgtype.Text{
+			String: req.FirstName,
+			Valid:  true,
+		},
+		LastName: pgtype.Text{
+			String: req.LastName,
+			Valid:  true,
+		},
+		UpdatedAt:   time.Now(),
+		Role:        userOld.Role,
+		Status:      userOld.Status,
+		PhoneNumber: userOld.PhoneNumber,
+		CountryCode: userOld.CountryCode,
+		PostalCode:  userOld.PostalCode,
+	}
+
+	user, err := s.queries.UpdateUser(ctx, arg)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	res := userResponse{
+		ID:        user.ID,
+		Username:  user.Username,
+		Email:     user.Email,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+		FirstName: user.FirstName.String,
+		LastName:  user.LastName.String,
+		Role:      user.Role,
 	}
 
 	ctx.JSON(http.StatusOK, res)

@@ -25,3 +25,7 @@ ansible_copy_files:
 
 act_deploy:
 	act --secret-file act.env --container-architecture linux/amd64 -W ./.github/workflows/deploy.yml
+
+lambda_upload:
+	cd lambda && zip -r lambda.zip . && aws lambda update-function-code --function-name xtTestEdgeData --zip-file fileb://lambda.zip
+	cd lambda && rm lambda.zip

@@ -2,13 +2,15 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"github.com/aws/aws-sdk-go-v2/service/timestreamquery"
-	"github.com/gin-gonic/gin"
-	"github.com/tasnimzotder/x-tracker/interfaces"
+	"github.com/tasnimzotder/x-tracker/constants"
+	"log"
+	"sort"
+	"time"
+
+	"github.com/influxdata/influxdb-client-go/v2/api/write"
 	"github.com/tasnimzotder/x-tracker/utils"
-	"net/http"
-	"strconv"
 )
 
 type getLastLocationsRequest struct {
@@ -16,58 +18,140 @@ type getLastLocationsRequest struct {
 	Limit    int   `json:"limit" binding:"required"`
 }
 
-func (s *Server) getLastLocations(ctx *gin.Context) {
-	var req getLastLocationsRequest
+// note: keep the struct keys as snake case for proper json marshalling for dynamodb
+type Location struct {
+	Device_ID int64 `json:"device_id"`
+	//Client_ID           string `json:"client_id"`
+	Lat                 string `json:"lat"`
+	Lng                 string `json:"lng"`
+	Timestamp           int64  `json:"timestamp"`
+	Processed_Timestamp int64  `json:"processed_timestamp"`
+	Battery_Status      int    `json:"battery_status"`
+}
 
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-		return
+func GetLocationsByDeviceID(s *Server, DeviceID int64) ([]Location, error) {
+	var locations []Location
+
+	// get location from influxdb
+	//queryAPI := s.influxdbClient.QueryAPI(constants.INFLUX_DB_ORG)
+	//query := `from(bucket: "locations")
+	//			|> range(start: -10000m`
+
+	// currTimestampMilli := utils.GetCurrentTimeMilli()
+	// prevTimestampMilli := currTimestampMilli - (60 * 60 * 1000)
+
+	// log.Println(prevTimestampMilli)
+
+	// keyEx := expression.Key("device_id").Equal(expression.Value(DeviceID)).And(expression.Key("timestamp").GreaterThanEqual(expression.Value(prevTimestampMilli)))
+
+	// expr, err := expression.NewBuilder().WithKeyCondition(keyEx).Build()
+
+	// if err != nil {
+	// 	return nil, err
+	// } else {
+	// 	queryPaginator := dynamodb.NewQueryPaginator(s.DynamoDB.DynamoDBClient, &dynamodb.QueryInput{
+	// 		TableName: &s.DynamoDB.TableName,
+	// 		// todo: use index
+	// 		IndexName:                 aws.String("device_id-timestamp-index"),
+	// 		ExpressionAttributeNames:  expr.Names(),
+	// 		ExpressionAttributeValues: expr.Values(),
+	// 		KeyConditionExpression:    expr.KeyCondition(),
+	// 		// Limit:                     aws.Int32(1),
+	// 	})
+
+	// 	for queryPaginator.HasMorePages() {
+	// 		response, err = queryPaginator.NextPage(context.TODO())
+	// 		if err != nil {
+	// 			log.Printf("Error: %v", err)
+	// 			return nil, err
+	// 		} else {
+	// 			var locationPage []Location
+
+	// 			err = attributevalue.UnmarshalListOfMaps(response.Items, &locationPage)
+	// 			if err != nil {
+	// 				return nil, err
+	// 			} else {
+	// 				locations = append(locations, locationPage...)
+	// 			}
+	// 		}
+	// 	}
+	// }
+
+	// sort locations by timestamp
+	sort.Slice(locations, func(i, j int) bool {
+		return locations[i].Timestamp > locations[j].Timestamp
+	})
+
+	return locations, nil
+}
+
+func (s *Server) WriteDataToInfluxDB(
+	topic string,
+	payload []byte,
+) {
+	org := constants.INFLUX_DB_ORG
+	bucket := constants.INFLUX_DB_BUCKET
+	writeAPI := s.influxdbClient.WriteAPIBlocking(org, bucket)
+
+	type Data struct {
+		DeviceID      int     `json:"device_id"`
+		ClientID      string  `json:"client_id"`
+		Timestamp     int64   `json:"timestamp"`
+		Lat           float64 `json:"lat"`
+		Lng           float64 `json:"lng"`
+		BatteryStatus int     `json:"battery_status"`
 	}
 
-	// get timestream data
-	querySvc := timestreamquery.NewFromConfig(s.AWS_Config)
+	var data Data
 
-	//queryPtr := fmt.Sprintf(`SELECT DISTINCT deviceID, latitude, longitude, time FROM "xtrackerDB".xtracker_table WHERE time > ago(%dh) ORDER BY time DESC`, req.Limit)
-	//queryPtr := fmt.Sprintf(`SELECT DISTINCT deviceID, latitude, longitude, time FROM "xtrackerDB".xtracker_table ORDER BY time DESC LIMIT %d`, req.Limit)
-	queryPtr := fmt.Sprintf(`SELECT DISTINCT deviceID, latitude, longitude, time FROM "xtrackerDB".xtracker_table WHERE deviceID = '%s' ORDER BY time DESC LIMIT %d`, strconv.FormatInt(req.DeviceID, 10), req.Limit)
-
-	queryInput := &timestreamquery.QueryInput{
-		QueryString: &queryPtr,
-	}
-
-	queryOutput, err := querySvc.Query(context.TODO(), queryInput)
+	err := json.Unmarshal(payload, &data)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
+		log.Fatal(err)
 	}
 
-	data := queryOutput.Rows
+	deviceID := fmt.Sprintf("%d", data.DeviceID)
 
-	type GeoJSONFeatureCollection struct {
-		Type     string                                `json:"type"`
-		Features []interfaces.GeoJSONFeatureLineString `json:"features"`
+	// check if the location falls within a geofence
+	geofence, err := s.queries.GetGeofencesByDevice(context.Background(), int64(data.DeviceID))
+	if err != nil {
+		log.Printf("Error: %v", err)
 	}
 
-	var geoJSON GeoJSONFeatureCollection
-	geoJSON.Type = "FeatureCollection"
+	for _, fence := range geofence {
 
-	var feature interfaces.GeoJSONFeatureLineString
-	feature.Type = "Feature"
-	feature.Geometry.Type = "LineString"
-
-	for _, row := range data {
-		coordinates := []float32{
-			utils.ConvStrToFloat(*row.Data[2].ScalarValue),
-			utils.ConvStrToFloat(*row.Data[1].ScalarValue),
+		fenceData := utils.Geofence{
+			CenterLat:  fence.CenterLat,
+			CenterLong: fence.CenterLong,
+			Radius:     fence.Radius,
+			Rule:       fence.Rule,
 		}
 
-		feature.Geometry.Coordinates = append(
-			feature.Geometry.Coordinates, coordinates,
+		// log.Printf("Geofence: %v", fence)
+		status, distance := utils.IsLocationInGeofence(
+			data.Lat,
+			data.Lng,
+			fenceData,
 		)
-		feature.Properties.DeviceID = *row.Data[0].ScalarValue
-		feature.Properties.Time = append(feature.Properties.Time, *row.Data[3].ScalarValue)
+
+		if status {
+			log.Printf("Device %v is within the geofence: %v with distance: %v", deviceID, fence.GeofenceName, distance)
+		}
 	}
 
-	geoJSON.Features = append(geoJSON.Features, feature)
-	ctx.JSON(http.StatusOK, geoJSON)
+	// write data to influxdb
+	tags := map[string]string{
+		"device_id": deviceID,
+	}
+
+	fields := map[string]interface{}{
+		"lat":            data.Lat,
+		"lng":            data.Lng,
+		"battery_status": data.BatteryStatus,
+		// "timestamp":      time.UnixMilli(data.Timestamp),
+	}
+
+	point := write.NewPoint("edge_location", tags, fields, time.UnixMilli(data.Timestamp))
+	if err := writeAPI.WritePoint(context.Background(), point); err != nil {
+		log.Fatal(err)
+	}
 }

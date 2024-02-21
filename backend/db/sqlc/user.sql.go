@@ -197,39 +197,36 @@ const updateUser = `-- name: UpdateUser :one
 UPDATE users
 SET
     username = $1,
-    hashed_password = $2,
-    email = $3,
-    updated_at = $4,
-    status = $5,
-    role = $6,
-    phone_number = $7,
-    country_code = $8,
-    first_name = $9,
-    last_name = $10,
-    postal_code = $11
+    email = $2,
+    updated_at = $3,
+    status = $4,
+    role = $5,
+    phone_number = $6,
+    country_code = $7,
+    first_name = $8,
+    last_name = $9,
+    postal_code = $10
 WHERE
-    id = $12 RETURNING id, username, hashed_password, email, created_at, updated_at, status, role, phone_number, country_code, first_name, last_name, postal_code
+    id = $11 RETURNING id, username, hashed_password, email, created_at, updated_at, status, role, phone_number, country_code, first_name, last_name, postal_code
 `
 
 type UpdateUserParams struct {
-	Username       string      `json:"username"`
-	HashedPassword string      `json:"hashed_password"`
-	Email          string      `json:"email"`
-	UpdatedAt      time.Time   `json:"updated_at"`
-	Status         string      `json:"status"`
-	Role           string      `json:"role"`
-	PhoneNumber    pgtype.Int8 `json:"phone_number"`
-	CountryCode    pgtype.Int4 `json:"country_code"`
-	FirstName      pgtype.Text `json:"first_name"`
-	LastName       pgtype.Text `json:"last_name"`
-	PostalCode     pgtype.Text `json:"postal_code"`
-	ID             int64       `json:"id"`
+	Username    string      `json:"username"`
+	Email       string      `json:"email"`
+	UpdatedAt   time.Time   `json:"updated_at"`
+	Status      string      `json:"status"`
+	Role        string      `json:"role"`
+	PhoneNumber pgtype.Int8 `json:"phone_number"`
+	CountryCode pgtype.Int4 `json:"country_code"`
+	FirstName   pgtype.Text `json:"first_name"`
+	LastName    pgtype.Text `json:"last_name"`
+	PostalCode  pgtype.Text `json:"postal_code"`
+	ID          int64       `json:"id"`
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
 	row := q.db.QueryRow(ctx, updateUser,
 		arg.Username,
-		arg.HashedPassword,
 		arg.Email,
 		arg.UpdatedAt,
 		arg.Status,

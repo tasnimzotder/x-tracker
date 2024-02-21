@@ -1,7 +1,5 @@
-import { useEffect, useState } from "react";
-import { getUserData } from "@/services/auth.service";
-import { getDeviceList } from "@/services/device.service";
-
+import { useState } from "react";
+// import { getUserData } from "@/services/auth.service";
 import styles from "./DeviceList.module.scss";
 
 const DeviceListCmp = (props: { devices: string[] }) => {

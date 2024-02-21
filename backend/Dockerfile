@@ -70,9 +70,9 @@ USER appuser
 COPY --from=build /bin/server /bin/
 
 #ENV SERVER_ADDRESS=""
-ENV DB_SOURCE="postgresql://root:secret@db:5432/xtracker?sslmode=disable"
-ENV AWS_REGION=$AWS_REGION
-ENV GIN_MODE=debug
+#ENV DB_SOURCE="postgresql://root:secret@db:5432/xtracker?sslmode=disable"
+#ENV AWS_REGION=$AWS_REGION
+#ENV GIN_MODE=debug
 
 # Expose the port that the application listens on.
 EXPOSE 8080

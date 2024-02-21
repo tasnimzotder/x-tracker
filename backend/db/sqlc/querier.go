@@ -11,14 +11,19 @@ import (
 type Querier interface {
 	CountUsers(ctx context.Context) (int64, error)
 	CreateDevice(ctx context.Context, arg CreateDeviceParams) (Device, error)
+	CreateGeofence(ctx context.Context, arg CreateGeofenceParams) (Geofence, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	DeleteGeofence(ctx context.Context, id int64) (Geofence, error)
 	DeleteUser(ctx context.Context, id int64) error
 	GetDevice(ctx context.Context, id int64) (Device, error)
 	GetDevicesByUser(ctx context.Context, userID int64) ([]Device, error)
+	GetGeofence(ctx context.Context, id int64) (Geofence, error)
+	GetGeofencesByDevice(ctx context.Context, deviceID int64) ([]Geofence, error)
 	GetUser(ctx context.Context, id int64) (User, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByUsername(ctx context.Context, username string) (User, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
+	UpdateGeofence(ctx context.Context, arg UpdateGeofenceParams) (Geofence, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
 }
 

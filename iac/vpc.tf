@@ -81,12 +81,12 @@ resource "aws_security_group" "xt-web-sg" {
   }
 
   #  temporary for testing; port 5432
-  ingress {
-    from_port   = 5432
-    to_port     = 5432
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  #  ingress {
+  #    from_port   = 5432
+  #    to_port     = 5432
+  #    protocol    = "tcp"
+  #    cidr_blocks = ["0.0.0.0/0"]
+  #  }
 
   #  temporary for testing; port 80
   ingress {
@@ -96,10 +96,11 @@ resource "aws_security_group" "xt-web-sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  # temporary for be server testing
   ingress {
-    from_port = 8080
-    to_port = 8080
-    protocol = "tcp"
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 

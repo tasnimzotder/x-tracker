@@ -1,15 +1,17 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 
 interface authRequest_t {
-  username: string;
+  id?: number;
+  username?: string;
   email?: string;
-  password: string;
+  password?: string;
+  firstName?: string;
+  lastName?: string;
 }
 
-const handleLogin = async (req: authRequest_t): Promise<boolean> => {
+const handleLogin = async (req: authRequest_t) => {
   const url: string = `${process.env.NEXT_PUBLIC_API_URL}/v1/users/login`;
 
   const reqOptions = {
@@ -24,62 +26,120 @@ const handleLogin = async (req: authRequest_t): Promise<boolean> => {
     console.error(err);
   });
 
-  console.log(response);
+  // console.log(response);
 
   if (!response || response.status !== 200) {
-    return false;
+    return null;
   }
 
-  let data = await response.json();
-  // console.log(data);
-
-  // const sessionData = {
-  //   username: data.username,
-  //   email: data.email,
-  //   id: data.id,
-  // };
-
-  cookies().set("session", JSON.stringify(data), {
-    path: "/",
-    maxAge: 60 * 60 * 24 * 7, // 1 week
-    httpOnly: true,
-  });
-
-  // console.log(JSON.parse(<string>cookies().get("session")?.value).username);
-
-  redirect("/");
-
-  // save data
-
-  return true;
+  return await response.json();
 };
 
-const handleLogout = () => {
-  cookies().set("session", "", {
-    path: "/",
-    maxAge: -1,
-    httpOnly: true,
+const handleRegister = async (req: authRequest_t) => {
+  const url: string = `${process.env.NEXT_PUBLIC_API_URL}/v1/users/create`;
+
+  const reqOptions = {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(req),
+  };
+
+  const response = await fetch(url, reqOptions).catch((err) => {
+    console.error(err);
   });
 
-  redirect("/auth");
-};
-
-const getUserData = async () => {
-  const data = await cookies().get("session");
-
-  let sessionData = null;
-
-  if (data?.value) {
-    sessionData = JSON.parse(data.value);
-
-    console.log({ sessionData });
-
-    return sessionData;
+  if (!response || response.status !== 200) {
+    return null;
   }
 
-  return "";
+  return await response.json();
 };
 
-export { handleLogin, getUserData, handleLogout };
+// const refetchUserData = async () => {
+//   let userData = await getUserData();
+//
+//   const url: string = `${process.env.NEXT_PUBLIC_API_URL}/v1/users/id/${userData.id}`;
+//
+//   const reqOptions = {
+//     method: "GET",
+//     headers: {
+//       "Content-Type": "application/json",
+//     },
+//   };
+//
+//   const response = await fetch(url, reqOptions).catch((err) => {
+//     console.error(err);
+//   });
+//
+//   if (!response || response.status !== 200) {
+//     return false;
+//   }
+//
+//   let data = await response.json();
+//
+//   // setCookie("session", JSON.stringify(data));
+// };
+
+// const handleProfileUpdate = async (req: authRequest_t) => {
+//   let userData = await getUserData();
+//
+//   req.id = userData.id;
+//
+//   const url: string = `${process.env.NEXT_PUBLIC_API_URL}/v1/users/update`;
+//
+//   const reqOptions = {
+//     method: "PUT",
+//     headers: {
+//       "Content-Type": "application/json",
+//     },
+//     body: JSON.stringify(req),
+//   };
+//
+//   const response = await fetch(url, reqOptions).catch((err) => {
+//     console.error(err);
+//   });
+//
+//   if (!response || response.status !== 200) {
+//     return false;
+//   }
+//
+//   let data = await response.json();
+//
+//   setCookie("session", JSON.stringify(data));
+// };
+
+// const setCookie = (name: string, value: string) => {
+//   cookies().set(name, value, {
+//     path: "/",
+//     maxAge: 60 * 60 * 24 * 7, // 1 week
+//     httpOnly: true,
+//   });
+// };
+
+// const getUserData = async () => {
+//   const data = await cookies().get("session");
+//
+//   let sessionData = null;
+//
+//   if (data?.value) {
+//     sessionData = JSON.parse(data.value);
+//
+//     // console.log({ sessionData });
+//
+//     return sessionData;
+//   }
+//
+//   return "";
+// };
+
+export {
+  handleLogin,
+  handleRegister,
+  // getUserData,
+  // refetchUserData,
+  // handleProfileUpdate,
+};
 
 export type { authRequest_t };

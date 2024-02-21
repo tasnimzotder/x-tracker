@@ -11,8 +11,8 @@ import (
 )
 
 type createDeviceRequest struct {
-	DeviceName string `json:"device_name" binding:"required"`
-	UserID     int    `json:"user_id" binding:"required"`
+	DeviceName string `json:"deviceName" binding:"required"`
+	UserID     int    `json:"userID" binding:"required"`
 }
 
 func (s *Server) createDevice(ctx *gin.Context) {

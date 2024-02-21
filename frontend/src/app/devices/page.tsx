@@ -1,29 +1,14 @@
 "use client";
-import { useEffect, useState } from "react";
-import { getUserData } from "@/services/auth.service";
-import { getDeviceList } from "@/services/device.service";
-import { formatTimeToLocaleString } from "@/utils/time.util";
 import { Container, Table } from "@mantine/core";
+import { useAuth } from "@/contexts/authContext";
+import { formatTimeToLocaleString } from "@/utils/time.util";
 
 const DevicePage = () => {
-  const [devices, setDevices] = useState<Array<any> | any>(null);
+  const { loggedIn, devices } = useAuth();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      let userData = await getUserData();
-
-      if (userData == "") {
-        setDevices(null);
-      } else {
-        let devices = await getDeviceList(userData.id);
-        console.log({ devices });
-
-        await setDevices(devices);
-      }
-    };
-
-    fetchData();
-  }, []);
+  if (!loggedIn) {
+    return <div>You are not logged in</div>;
+  }
 
   return (
     <Container>

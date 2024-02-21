@@ -9,9 +9,18 @@ if [ -f .env.local ]; then
     done < .env.local
 fi
 
+if [ -f backend/app.env ]; then
+    while IFS= read -r line; do
+        export "$line"
+    done < backend/app.env
+fi
+
+# set env variables
+export ENVIRONMENT=staging
+
 # login to aws
-aws ecr get-login-password --region $AWS_REGION | \
-   docker login --username AWS --password-stdin $ECR_REGISTRY
+#aws ecr get-login-password --region $AWS_REGION | \
+#   docker login --username AWS --password-stdin $ECR_REGISTRY
 
 if  [ $FLAG = "up" ]; then
   # run docker compose with env variables
@@ -22,12 +31,14 @@ if  [ $FLAG = "up" ]; then
     IMAGE_TAG=$IMAGE_TAG \
     DB_VOLUME_HOST=$DB_VOLUME_HOST \
     DB_PASSWORD=$DB_PASSWORD \
-    DB_SOURCE=$DB_SOURCE \
+    XT_DB_SOURCE=$XT_DB_SOURCE \
     GIN_MODE=$GIN_MODE \
     SERVER_ADDRESS=$SERVER_ADDRESS \
     NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
     NEXT_PUBLIC_MAPBOX_TOKEN=$NEXT_PUBLIC_MAPBOX_TOKEN \
-      docker compose up -d --pull always --build
+    ENVIRONMENT=$ENVIRONMENT \
+      docker compose up -d --build
+#      docker compose up -d --pull always --build
 elif [ $FLAG = "down" ]; then
     docker compose down
 fi

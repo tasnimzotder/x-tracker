@@ -32,6 +32,19 @@ type DeviceActivity struct {
 	ActivityData []byte    `json:"activity_data"`
 }
 
+type Geofence struct {
+	ID           int64     `json:"id"`
+	DeviceID     int64     `json:"device_id"`
+	GeofenceName string    `json:"geofence_name"`
+	Rule         string    `json:"rule"`
+	Status       string    `json:"status"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+	CenterLat    float64   `json:"center_lat"`
+	CenterLong   float64   `json:"center_long"`
+	Radius       float64   `json:"radius"`
+}
+
 type User struct {
 	ID             int64       `json:"id"`
 	Username       string      `json:"username"`

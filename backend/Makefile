@@ -31,4 +31,4 @@ build:
 	go build -o ./$(BUILD_DIR)/backend.bin
 
 run:
-	./$(BUILD_DIR)/backend.bin
+	go run main.go

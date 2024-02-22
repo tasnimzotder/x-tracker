@@ -45,7 +45,7 @@ func (s *Server) createUser(ctx *gin.Context) {
 		Role:           "user",
 	}
 
-	user, err := s.queries.CreateUser(ctx, arg)
+	user, err := s.Queries.CreateUser(ctx, arg)
 	if err != nil {
 		var pqErr *pgconn.PgError
 		if errors.As(err, &pqErr) {
@@ -84,7 +84,7 @@ func (s *Server) getUserByID(ctx *gin.Context) {
 		return
 	}
 
-	user, err := s.queries.GetUser(ctx, int64(idInt))
+	user, err := s.Queries.GetUser(ctx, int64(idInt))
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
@@ -117,7 +117,7 @@ func (s *Server) getUserByUsername(ctx *gin.Context) {
 		return
 	}
 
-	user, err := s.queries.GetUserByUsername(ctx, username)
+	user, err := s.Queries.GetUserByUsername(ctx, username)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
@@ -166,7 +166,7 @@ func (s *Server) getAllUsers(ctx *gin.Context) {
 		return
 	}
 
-	users, err := s.queries.ListUsers(ctx, db.ListUsersParams{
+	users, err := s.Queries.ListUsers(ctx, db.ListUsersParams{
 		Limit:  int32(limitInt),
 		Offset: int32(offsetInt),
 	})
@@ -207,7 +207,7 @@ func (s *Server) updateUser(ctx *gin.Context) {
 		return
 	}
 
-	userOld, err := s.queries.GetUser(ctx, req.ID)
+	userOld, err := s.Queries.GetUser(ctx, req.ID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
@@ -238,7 +238,7 @@ func (s *Server) updateUser(ctx *gin.Context) {
 		PostalCode:  userOld.PostalCode,
 	}
 
-	user, err := s.queries.UpdateUser(ctx, arg)
+	user, err := s.Queries.UpdateUser(ctx, arg)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return

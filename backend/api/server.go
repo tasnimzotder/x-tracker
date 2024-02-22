@@ -1,8 +1,13 @@
 package api
 
 import (
+	"encoding/json"
 	"github.com/IBM/sarama"
+	"github.com/tasnimzotder/x-tracker/models"
+	"github.com/tasnimzotder/x-tracker/utils"
 	"log"
+	"strconv"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
@@ -21,11 +26,11 @@ type DynamoDB struct {
 type Server struct {
 	Router    *gin.Engine
 	AwsConfig aws.Config
-	queries   *db.Queries
+	Queries   *db.Queries
 	// rdb        *redis.Client
 	DynamoDB       *DynamoDB
 	mqttClient     mqtt.Client
-	influxdbClient influxdb2.Client
+	InfluxdbClient influxdb2.Client
 	kafkaProducer  sarama.SyncProducer
 }
 
@@ -38,10 +43,10 @@ func NewServer(
 ) *Server {
 	server := &Server{
 		AwsConfig: cfg,
-		queries:   queries,
+		Queries:   queries,
 		// rdb:        rdb,
 		mqttClient:     mqttClient,
-		influxdbClient: influxdbClient,
+		InfluxdbClient: influxdbClient,
 		kafkaProducer:  kafkaProducer,
 		DynamoDB: &DynamoDB{
 			DynamoDBClient: dynamodb.NewFromConfig(cfg),
@@ -76,16 +81,14 @@ func NewServer(
 	router.POST("/v1/devices/create", server.createDevice)
 	router.GET("/v1/devices/user/:user_id", server.getDeviceByUserID)
 
-	//locations
-	//router.POST("/v1/locations/get", server.getLastLocations)
-	// router.GET("/v1/locations/user/:user_id/:limit", server.getLocationsByUserID)
-
-	// websocket
-	router.GET("/v1/ws/location", server.wsLatestLocation)
+	//router.GET("/v1/ws/location", server.wsLatestLocation)
 	router.POST("/v1/geofence/create", server.createGeofence)
 
 	// test
 	//router.POST("/v1/test", server.sendMessagehandler)
+
+	// sse
+	router.GET("/v1/sse/location_updates/:device_id", server.sseLocationUpdates)
 
 	server.Router = router
 	return server
@@ -97,17 +100,38 @@ func (s *Server) Start(address string) error {
 		log.Fatal(token.Error())
 	}
 
-	// s.WriteDataToInfluxDB()
-	//s.setupKafka()
-
 	return s.Router.Run(address)
 }
 
 func (s *Server) msgHandler(_ mqtt.Client, msg mqtt.Message) {
-	// log.Printf("TOPIC: %s\n", msg.Topic())
-	// log.Printf("MSG: %s\n", msg.Payload())
+	var data models.Location
 
-	s.WriteDataToInfluxDB(msg.Payload())
+	err := json.Unmarshal(msg.Payload(), &data)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	go func(s *Server, data models.Location) {
+		s.WriteDataToInfluxDB(msg.Payload())
+	}(s, data)
+
+	go func(s *Server, data models.Location) {
+		topic := "location_updates"
+		key := strconv.FormatInt(data.DeviceID, 10)
+		// convert data to json string
+		value, err := json.Marshal(data)
+		if err != nil {
+			log.Printf("Error: %v", err)
+			return
+		}
+
+		err = utils.SendKafkaMessage(s.kafkaProducer, topic, key, string(value))
+		if err != nil {
+			log.Printf("Error: %v", err)
+		} else {
+			log.Printf("Message sent to Kafka %v", time.Now())
+		}
+	}(s, data)
 }
 
 func errorResponse(err error) gin.H {

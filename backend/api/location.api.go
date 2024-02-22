@@ -4,14 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/tasnimzotder/x-tracker/models"
 	"log"
 	"sort"
 	"time"
 
-	"github.com/tasnimzotder/x-tracker/constants"
-
 	"github.com/influxdata/influxdb-client-go/v2/api/write"
+	"github.com/tasnimzotder/x-tracker/constants"
+	"github.com/tasnimzotder/x-tracker/models"
 	"github.com/tasnimzotder/x-tracker/utils"
 )
 
@@ -19,17 +18,6 @@ type getLastLocationsRequest struct {
 	DeviceID int64 `json:"device_id" binding:"required"`
 	Limit    int   `json:"limit" binding:"required"`
 }
-
-//// note: keep the struct keys as snake case for proper json marshalling for dynamodb
-//type Location struct {
-//	Device_ID int64 `json:"device_id"`
-//	//Client_ID           string `json:"client_id"`
-//	Lat                 string `json:"lat"`
-//	Lng                 string `json:"lng"`
-//	Timestamp           int64  `json:"timestamp"`
-//	Processed_Timestamp int64  `json:"processed_timestamp"`
-//	Battery_Status      int    `json:"battery_status"`
-//}
 
 func GetLocationsByDeviceID(s *Server, DeviceID int64) ([]models.Location, error) {
 	var locations []models.Location
@@ -49,7 +37,7 @@ func (s *Server) WriteDataToInfluxDB(
 ) {
 	org := constants.INFLUX_DB_ORG
 	bucket := constants.INFLUX_DB_BUCKET
-	writeAPI := s.influxdbClient.WriteAPIBlocking(org, bucket)
+	writeAPI := s.InfluxdbClient.WriteAPIBlocking(org, bucket)
 
 	//type Data struct {
 	//	DeviceID      int     `json:"device_id"`
@@ -70,7 +58,7 @@ func (s *Server) WriteDataToInfluxDB(
 	deviceID := fmt.Sprintf("%d", data.DeviceID)
 
 	// check if the location falls within a geofence
-	geofence, err := s.queries.GetGeofencesByDevice(context.Background(), int64(data.DeviceID))
+	geofence, err := s.Queries.GetGeofencesByDevice(context.Background(), int64(data.DeviceID))
 	if err != nil {
 		log.Printf("Error: %v", err)
 	}
@@ -115,13 +103,13 @@ func (s *Server) WriteDataToInfluxDB(
 
 	//	todo: remove this
 	// send msg to kafka
-
-	topic := "location"
-	key := deviceID
-	value := payload
-
-	err = utils.SendKafkaMessage(s.kafkaProducer, topic, key, string(value))
-	if err != nil {
-		log.Printf("Error: %v", err)
-	}
+	//
+	//topic := "location"
+	//key := deviceID
+	//value := payload
+	//
+	//err = utils.SendKafkaMessage(s.kafkaProducer, topic, key, string(value))
+	//if err != nil {
+	//	log.Printf("Error: %v", err)
+	//}
 }

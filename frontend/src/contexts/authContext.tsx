@@ -15,12 +15,14 @@ import {
 import { deleteCookie, getCookie, setCookie } from "cookies-next";
 import { useRouter } from "next/navigation";
 import { getDeviceList } from "@/services/device.service";
+import { getRecentLocation } from "@/services/location.service";
 
 const AuthContext = createContext({
   locations: [] as Array<any>,
   loggedIn: false as boolean,
   userData: null as any,
   devices: [] as Array<any>,
+  recentLocation: null as any,
   loadLocations: false as boolean,
   setLoadLocations: (val: boolean) => {},
   login: (req: authRequest_t) => {},
@@ -37,6 +39,8 @@ const AuthContextProvider = ({ children }: { children: React.ReactNode }) => {
   const [devices, setDevices] = useState<Array<any>>([]);
   const [loadLocations, setLoadLocations] = useState<boolean>(false);
 
+  const [recentLocation, setRecentLocation] = useState();
+
   const cookie_name = "session";
   const router = useRouter();
 
@@ -46,53 +50,34 @@ const AuthContextProvider = ({ children }: { children: React.ReactNode }) => {
   const updateDeviceList = async () => {
     const res = await getDeviceList(userData.id);
 
+    // todo: remove this
+    await getRecentLocation(1);
+
     if (res != null) {
       setDevices(res);
     }
   };
 
-  const updateLocationList = async () => {
-    ws.current = new WebSocket(
-      `${process.env.NEXT_PUBLIC_WS_API_URL}/v1/ws/location`,
+  const updateRecentLocation = async (device_id: number) => {
+    const eventSource = new EventSource(
+      `${process.env.NEXT_PUBLIC_API_URL}/v1/sse/location_updates/${device_id}`,
     );
+    // const eventSource = new EventSource(
+    //   `http://localhost:8080/v1/sse/location_updates/1`,
+    // );
 
-    if (ws.current == null) {
-      console.log("WS is null");
-      return;
-    }
-
-    ws.current.onopen = () => {
-      console.log("Connected to WS");
-
-      if (ws.current) {
-        ws.current.send(
-          JSON.stringify({
-            user_id: userData.id,
-            device_id: 2,
-          }),
-        );
-      }
-    };
-
-    // send message to server
-
-    ws.current.onmessage = (event: { data: string }) => {
-      if (!loggedIn || userData == null) {
-        console.log("Not logged in");
-
-        if (ws.current) {
-          // ws.current.close();
-          ws.current?.send("disconnect");
-        }
-        ws.current = null;
-        return;
-      }
-      //
+    eventSource.onmessage = (event) => {
       const data = JSON.parse(event.data);
       console.log("Message received");
-      setLocations(data);
+      console.log({ data });
 
-      ws.current?.send("connect");
+      setRecentLocation(data);
+
+      // setLocations((prev) => [...prev, data]);
+    };
+
+    eventSource.onerror = (error) => {
+      console.error("EventSource failed:", error);
     };
   };
 
@@ -109,6 +94,8 @@ const AuthContextProvider = ({ children }: { children: React.ReactNode }) => {
         updateDeviceList();
       }
     }
+
+    // updateRecentLocation(1);
   }, []);
 
   useEffect(() => {
@@ -118,22 +105,12 @@ const AuthContextProvider = ({ children }: { children: React.ReactNode }) => {
   }, [loggedIn, userData]);
 
   useEffect(() => {
-    if (loadLocations) {
-      console.log({ loadLocations });
+    console.log(devices);
 
-      if (ws.current == null && loggedIn && userData) {
-        updateLocationList().then(() => {
-          console.log("Location list updated");
-        });
-      }
-    } else {
-      if (ws.current) {
-        // ws.current.close();
-        ws.current?.send("disconnect");
-        ws.current = null;
-      }
+    if (devices.length > 0) {
+      updateRecentLocation(devices[0].id);
     }
-  }, [loadLocations, loggedIn, userData]);
+  }, [devices]);
 
   const resetAuth = () => {
     deleteCookie(cookie_name);
@@ -204,6 +181,7 @@ const AuthContextProvider = ({ children }: { children: React.ReactNode }) => {
     loggedIn,
     userData,
     devices,
+    recentLocation,
     loadLocations,
     setLoadLocations,
     login,

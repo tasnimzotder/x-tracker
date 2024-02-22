@@ -1,10 +1,10 @@
 services:
-  server:
+  backend:
     #    image: $ECR_REGISTRY/$ECR_REPOSITORY_BE:$IMAGE_TAG
     build:
       context: ./backend
       target: final
-    container_name: 'server'
+    container_name: 'backend'
     labels:
       - traefik.enable=true
       - traefik.http.routers.server.rule=Host(`api.xt.localhost`)
@@ -48,15 +48,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    networks:
-      - xtracker-be
-
-  redis:
-    image: redis/redis-stack:latest
-    container_name: 'redis_stack'
-    ports:
-      - 6379:6379
-      - 8001:8001
     networks:
       - xtracker-be
 

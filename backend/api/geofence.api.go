@@ -26,7 +26,7 @@ func (s *Server) createGeofence(ctx *gin.Context) {
 	}
 
 	// check if device exists
-	_, err := s.queries.GetDevice(ctx, request.DeviceID)
+	_, err := s.Queries.GetDevice(ctx, request.DeviceID)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(
 			errors.New("device not found"),
@@ -47,7 +47,7 @@ func (s *Server) createGeofence(ctx *gin.Context) {
 		Rule:         request.Rule,
 	}
 
-	geofence, err := s.queries.CreateGeofence(ctx, arg)
+	geofence, err := s.Queries.CreateGeofence(ctx, arg)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
@@ -55,5 +55,3 @@ func (s *Server) createGeofence(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, geofence)
 }
-
-

@@ -66,7 +66,7 @@ func main() {
 	queries := db.New(connPool)
 
 	// kafka
-	kafkaProducer, err := utils.SetupKafkaProducer()
+	kafkaProducer, err := utils.SetupKafka()
 	if err != nil {
 		log.Fatalf("failed to setup kafka producer: %v", err)
 	}

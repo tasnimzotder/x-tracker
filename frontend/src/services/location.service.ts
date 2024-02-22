@@ -5,6 +5,8 @@ interface locationService_t {
   time: string;
 }
 
+const getRecentLocation = async (device_id: number) => {};
+
 const getLastLocations = async (device_id: number, limit: number) => {
   const url: string = `${process.env.NEXT_PUBLIC_API_URL}/v1/locations/get`;
 
@@ -78,6 +80,6 @@ const getLocationsByUserID = async (
   };
 };
 
-export { getLastLocations, getLocationsByUserID };
+export { getLastLocations, getLocationsByUserID, getRecentLocation };
 
 export type { locationService_t, location_t, locationData_t };

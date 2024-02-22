@@ -31,7 +31,7 @@ func (s *Server) createDevice(ctx *gin.Context) {
 	}
 
 	//check if user exists
-	_, err := s.queries.GetUser(ctx, int64(req.UserID))
+	_, err := s.Queries.GetUser(ctx, int64(req.UserID))
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(
 			errors.New("user not found"),
@@ -47,7 +47,7 @@ func (s *Server) createDevice(ctx *gin.Context) {
 		CreatedAt:  time.Now(),
 	}
 
-	device, err := s.queries.CreateDevice(ctx, arg)
+	device, err := s.Queries.CreateDevice(ctx, arg)
 	if err != nil {
 		var pqErr *pgconn.PgError
 
@@ -84,7 +84,7 @@ func (s *Server) getDeviceByUserID(ctx *gin.Context) {
 		return
 	}
 
-	devices, err := s.queries.GetDevicesByUser(ctx, int64(parsedUserID))
+	devices, err := s.Queries.GetDevicesByUser(ctx, int64(parsedUserID))
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return

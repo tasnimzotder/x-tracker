@@ -12,9 +12,37 @@ const getDeviceList = async (user_id: number) => {
 
   const response = await fetch(url, reqOptions).catch((err) => {
     console.error(err);
+    return null;
   });
 
-  console.log(response);
+  if (!response || response.status !== 200) {
+    return null;
+  }
+
+  return await response.json();
+};
+
+interface deviceCreateRequest_t {
+  deviceName: string;
+  userID: number;
+}
+
+const createDevice = async (req: deviceCreateRequest_t) => {
+  const url: string = `${process.env.NEXT_PUBLIC_API_URL}/v1/devices/create`;
+
+  const reqOptions = {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(req),
+  };
+
+  const response = await fetch(url, reqOptions).catch((err) => {
+    console.error(err);
+  });
+
+  // console.log(response);
 
   if (!response || response.status !== 200) {
     return false;
@@ -25,4 +53,6 @@ const getDeviceList = async (user_id: number) => {
   return data;
 };
 
-export { getDeviceList };
+export { getDeviceList, createDevice };
+
+export type { deviceCreateRequest_t };

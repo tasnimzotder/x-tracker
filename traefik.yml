@@ -1,0 +1,49 @@
+global:
+  checkNewVersion: true
+  sendAnonymousUsage: false
+
+api:
+  dashboard: true
+  insecure: true
+  debug: true
+
+entryPoints:
+  web:
+    address: ":80"
+#    http:
+#      redirections:
+#        entryPoint:
+#          to: websecure
+#          scheme: https
+  websecure:
+    address: ":443"
+
+providers:
+  docker:
+    exposedByDefault: false  # Expose services only via labels
+
+http:
+  middlewares:
+    frontend-auth-s:
+      basicAuth:
+        users:
+          - "admin:$apr1$tr260y4j$s/EW7HLf50imZHftZneom."
+
+#certificatesResolvers:
+#  staging:
+#    acme:
+#      email: hello@tasnim.dev
+#      storage: acme.json
+#      caServer: https://acme-staging-v02.api.letsencrypt.org/directory
+#      httpChallenge:
+#        entryPoint: web
+#      tlsChallenge: { }
+#
+#  production:
+#    acme:
+#      email: hello@tasnim.dev
+#      storage: acme.json
+#      caServer: https://acme-v02.api.letsencrypt.org/directory
+#      httpChallenge:
+#        entryPoint: web
+#      tlsChallenge: { }

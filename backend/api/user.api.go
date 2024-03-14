@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgtype"
 	db "github.com/tasnimzotder/x-tracker/db/sqlc"
 	"github.com/tasnimzotder/x-tracker/utils"
 	"net/http"
@@ -44,7 +45,7 @@ func (s *Server) createUser(ctx *gin.Context) {
 		Role:           "user",
 	}
 
-	user, err := s.queries.CreateUser(ctx, arg)
+	user, err := s.Queries.CreateUser(ctx, arg)
 	if err != nil {
 		var pqErr *pgconn.PgError
 		if errors.As(err, &pqErr) {
@@ -83,7 +84,7 @@ func (s *Server) getUserByID(ctx *gin.Context) {
 		return
 	}
 
-	user, err := s.queries.GetUser(ctx, int64(idInt))
+	user, err := s.Queries.GetUser(ctx, int64(idInt))
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
@@ -116,7 +117,7 @@ func (s *Server) getUserByUsername(ctx *gin.Context) {
 		return
 	}
 
-	user, err := s.queries.GetUserByUsername(ctx, username)
+	user, err := s.Queries.GetUserByUsername(ctx, username)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
@@ -165,7 +166,7 @@ func (s *Server) getAllUsers(ctx *gin.Context) {
 		return
 	}
 
-	users, err := s.queries.ListUsers(ctx, db.ListUsersParams{
+	users, err := s.Queries.ListUsers(ctx, db.ListUsersParams{
 		Limit:  int32(limitInt),
 		Offset: int32(offsetInt),
 	})
@@ -186,6 +187,72 @@ func (s *Server) getAllUsers(ctx *gin.Context) {
 			LastName:  user.LastName.String,
 			Role:      user.Role,
 		})
+	}
+
+	ctx.JSON(http.StatusOK, res)
+}
+
+type updateUserRequest struct {
+	ID        int64  `json:"id"`
+	Username  string `json:"username"`
+	Email     string `json:"email"`
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
+}
+
+func (s *Server) updateUser(ctx *gin.Context) {
+	var req updateUserRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	userOld, err := s.Queries.GetUser(ctx, req.ID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	arg := db.UpdateUserParams{
+		ID:       req.ID,
+		Username: req.Username,
+		Email:    req.Email,
+		FirstName: pgtype.Text{
+			String: req.FirstName,
+			Valid:  true,
+		},
+		LastName: pgtype.Text{
+			String: req.LastName,
+			Valid:  true,
+		},
+		UpdatedAt:   time.Now(),
+		Role:        userOld.Role,
+		Status:      userOld.Status,
+		PhoneNumber: userOld.PhoneNumber,
+		CountryCode: userOld.CountryCode,
+		PostalCode:  userOld.PostalCode,
+	}
+
+	user, err := s.Queries.UpdateUser(ctx, arg)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	res := userResponse{
+		ID:        user.ID,
+		Username:  user.Username,
+		Email:     user.Email,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+		FirstName: user.FirstName.String,
+		LastName:  user.LastName.String,
+		Role:      user.Role,
 	}
 
 	ctx.JSON(http.StatusOK, res)

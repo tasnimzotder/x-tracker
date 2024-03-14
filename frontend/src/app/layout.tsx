@@ -7,6 +7,7 @@ import "@mantine/core/styles.css";
 import { ColorSchemeScript, MantineProvider } from "@mantine/core";
 import Header from "@/components/header/Header";
 import Footer from "@/components/footer/Footer";
+import { AuthContextProvider } from "@/contexts/authContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -26,13 +27,15 @@ export default function RootLayout({
         <ColorSchemeScript />
       </head>
       <body className={inter.className}>
-        <MantineProvider>
-          <div className={""}>
-            <Header />
-            {children}
-          </div>
-          <Footer />
-        </MantineProvider>
+        <AuthContextProvider>
+          <MantineProvider>
+            <div className={""}>
+              <Header />
+              {children}
+            </div>
+            <Footer />
+          </MantineProvider>
+        </AuthContextProvider>
       </body>
     </html>
   );

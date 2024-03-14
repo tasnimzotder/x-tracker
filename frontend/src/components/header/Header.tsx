@@ -1,53 +1,46 @@
 "use client";
 
-import { Box, Button, Group } from "@mantine/core";
+import { Avatar, Box, Button, Group } from "@mantine/core";
 import styles from "./Header.module.scss";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { getUserData, handleLogout } from "@/services/auth.service";
+import { useAuth } from "@/contexts/authContext";
 
 const Header = () => {
-  const [userData, setUserData] = useState<any>(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { loggedIn, userData, logout } = useAuth();
 
   const router = useRouter();
-
-  useEffect(() => {
-    const fetchData = async () => {
-      let userData = await getUserData();
-
-      if (userData == "") {
-        setIsLoggedIn(false);
-        setUserData(null);
-      } else {
-        setIsLoggedIn(true);
-        setUserData(userData);
-      }
-    };
-
-    fetchData();
-  }, [usePathname().toString()]);
 
   return (
     <Box pb={15}>
       <header className={styles.header}>
         <Group justify={"space-between"}>
-          <Link href={"/"}>
-            <h1 className={styles.brandName}>xTracker</h1>
-          </Link>
+          <Group gap={20}>
+            <Link href={"/"}>
+              <h1 className={styles.brandName}>xTracker</h1>
+            </Link>
 
-          <Group gap={10}>
             <Link href={"devices"}>Devices</Link>
           </Group>
 
-          <Group>{userData && <p>Welcome {userData.username}</p>}</Group>
-
           <Group>
-            {!isLoggedIn ? (
+            {userData && (
+              <p>
+                <Link href={"/profile"}>
+                  <Avatar
+                    src={
+                      "https://avatars.githubusercontent.com/u/44049528mm?v=4"
+                    }
+                    alt={"user profile picture"}
+                  />
+                </Link>
+              </p>
+            )}
+
+            {!loggedIn ? (
               <Button onClick={() => router.push("/auth")}>Log in</Button>
             ) : (
-              <Button onClick={() => handleLogout()}>Logout</Button>
+              <Button onClick={() => logout()}>Logout</Button>
             )}
           </Group>
         </Group>

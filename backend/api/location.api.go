@@ -2,13 +2,16 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"github.com/aws/aws-sdk-go-v2/service/timestreamquery"
-	"github.com/gin-gonic/gin"
-	"github.com/tasnimzotder/x-tracker/interfaces"
+	"log"
+	"sort"
+	"time"
+
+	"github.com/influxdata/influxdb-client-go/v2/api/write"
+	"github.com/tasnimzotder/x-tracker/constants"
+	"github.com/tasnimzotder/x-tracker/models"
 	"github.com/tasnimzotder/x-tracker/utils"
-	"net/http"
-	"strconv"
 )
 
 type getLastLocationsRequest struct {
@@ -16,58 +19,97 @@ type getLastLocationsRequest struct {
 	Limit    int   `json:"limit" binding:"required"`
 }
 
-func (s *Server) getLastLocations(ctx *gin.Context) {
-	var req getLastLocationsRequest
+func GetLocationsByDeviceID(s *Server, DeviceID int64) ([]models.Location, error) {
+	var locations []models.Location
 
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-		return
-	}
+	// todo: get locations from influxdb
 
-	// get timestream data
-	querySvc := timestreamquery.NewFromConfig(s.AWS_Config)
+	// sort locations by timestamp
+	sort.Slice(locations, func(i, j int) bool {
+		return locations[i].Timestamp > locations[j].Timestamp
+	})
 
-	//queryPtr := fmt.Sprintf(`SELECT DISTINCT deviceID, latitude, longitude, time FROM "xtrackerDB".xtracker_table WHERE time > ago(%dh) ORDER BY time DESC`, req.Limit)
-	//queryPtr := fmt.Sprintf(`SELECT DISTINCT deviceID, latitude, longitude, time FROM "xtrackerDB".xtracker_table ORDER BY time DESC LIMIT %d`, req.Limit)
-	queryPtr := fmt.Sprintf(`SELECT DISTINCT deviceID, latitude, longitude, time FROM "xtrackerDB".xtracker_table WHERE deviceID = '%s' ORDER BY time DESC LIMIT %d`, strconv.FormatInt(req.DeviceID, 10), req.Limit)
+	return locations, nil
+}
 
-	queryInput := &timestreamquery.QueryInput{
-		QueryString: &queryPtr,
-	}
+func (s *Server) WriteDataToInfluxDB(
+	payload []byte,
+) {
+	org := constants.INFLUX_DB_ORG
+	bucket := constants.INFLUX_DB_BUCKET
+	writeAPI := s.InfluxdbClient.WriteAPIBlocking(org, bucket)
 
-	queryOutput, err := querySvc.Query(context.TODO(), queryInput)
+	//type Data struct {
+	//	DeviceID      int     `json:"device_id"`
+	//	ClientID      string  `json:"client_id"`
+	//	Timestamp     int64   `json:"timestamp"`
+	//	Lat           float64 `json:"lat"`
+	//	Lng           float64 `json:"lng"`
+	//	BatteryStatus int     `json:"battery_status"`
+	//}
+
+	var data models.Location
+
+	err := json.Unmarshal(payload, &data)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
+		log.Fatal(err)
 	}
 
-	data := queryOutput.Rows
+	deviceID := fmt.Sprintf("%d", data.DeviceID)
 
-	type GeoJSONFeatureCollection struct {
-		Type     string                                `json:"type"`
-		Features []interfaces.GeoJSONFeatureLineString `json:"features"`
+	// check if the location falls within a geofence
+	geofence, err := s.Queries.GetGeofencesByDevice(context.Background(), int64(data.DeviceID))
+	if err != nil {
+		log.Printf("Error: %v", err)
 	}
 
-	var geoJSON GeoJSONFeatureCollection
-	geoJSON.Type = "FeatureCollection"
+	for _, fence := range geofence {
 
-	var feature interfaces.GeoJSONFeatureLineString
-	feature.Type = "Feature"
-	feature.Geometry.Type = "LineString"
-
-	for _, row := range data {
-		coordinates := []float32{
-			utils.ConvStrToFloat(*row.Data[2].ScalarValue),
-			utils.ConvStrToFloat(*row.Data[1].ScalarValue),
+		fenceData := utils.Geofence{
+			CenterLat:  fence.CenterLat,
+			CenterLong: fence.CenterLong,
+			Radius:     fence.Radius,
+			Rule:       fence.Rule,
 		}
 
-		feature.Geometry.Coordinates = append(
-			feature.Geometry.Coordinates, coordinates,
+		// log.Printf("Geofence: %v", fence)
+		status, distance := utils.IsLocationInGeofence(
+			data.Lat,
+			data.Long,
+			fenceData,
 		)
-		feature.Properties.DeviceID = *row.Data[0].ScalarValue
-		feature.Properties.Time = append(feature.Properties.Time, *row.Data[3].ScalarValue)
+
+		if status {
+			log.Printf("Device %v is within the geofence: %v with distance: %v", deviceID, fence.GeofenceName, distance)
+		}
 	}
 
-	geoJSON.Features = append(geoJSON.Features, feature)
-	ctx.JSON(http.StatusOK, geoJSON)
+	// write data to influxdb
+	tags := map[string]string{
+		"device_id": deviceID,
+	}
+
+	fields := map[string]interface{}{
+		"lat":            data.Lat,
+		"long":           data.Long,
+		"battery_status": data.BatteryStatus,
+		// "timestamp":      time.UnixMilli(data.Timestamp),
+	}
+
+	point := write.NewPoint("edge_location", tags, fields, time.UnixMilli(data.Timestamp))
+	if err := writeAPI.WritePoint(context.Background(), point); err != nil {
+		log.Fatal(err)
+	}
+
+	//	todo: remove this
+	// send msg to kafka
+	//
+	//topic := "location"
+	//key := deviceID
+	//value := payload
+	//
+	//err = utils.SendKafkaMessage(s.kafkaProducer, topic, key, string(value))
+	//if err != nil {
+	//	log.Printf("Error: %v", err)
+	//}
 }

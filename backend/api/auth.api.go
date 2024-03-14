@@ -25,7 +25,7 @@ func (s *Server) userLogin(ctx *gin.Context) {
 		return
 	}
 
-	user, err := s.queries.GetUserByUsername(ctx, req.Username)
+	user, err := s.Queries.GetUserByUsername(ctx, req.Username)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))

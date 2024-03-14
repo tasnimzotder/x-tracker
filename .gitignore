@@ -83,6 +83,8 @@ iac/.terraform.lock.hcl
 iac/playbooks/inventory.ini
 act.env
 **/.secrets
-.idea/
-.idea/aws.xml
+.idea
 db-data
+acme.json
+.vscode
+.idea/aws.xml

@@ -35,7 +35,22 @@ CREATE TABLE "device_activities" (
     "activity_data" JSONB NOT NULL
 );
 
+CREATE TABLE "geofences" (
+    "id" bigserial PRIMARY KEY,
+    "device_id" BIGINT NOT NULL,
+    "geofence_name" VARCHAR(255) NOT NULL,
+    "rule" VARCHAR(255) NOT NULL DEFAULT 'in',
+    "status" VARCHAR(255) NOT NULL DEFAULT 'active',
+    "created_at" timestamptz NOT NULL DEFAULT now(),
+    "updated_at" timestamptz NOT NULL DEFAULT now(),
+    "center_lat" FLOAT NOT NULL,
+    "center_long" FLOAT NOT NULL,
+    "radius" FLOAT NOT NULL
+);
+
+
 CREATE INDEX ON "device_activities" ("device_id");
 
 ALTER TABLE "devices" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
 ALTER TABLE "device_activities" ADD FOREIGN KEY ("device_id") REFERENCES "devices" ("id");
+ALTER TABLE "geofences" ADD FOREIGN KEY ("device_id") REFERENCES "devices" ("id");

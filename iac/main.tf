@@ -27,11 +27,9 @@ resource "aws_instance" "xt-be" {
   ami               = "ami-058bd2d568351da34"
   instance_type     = "t2.micro"
   key_name          = aws_key_pair.ssh_key.key_name
-  #  count         = length(local.instances)
   availability_zone = "us-east-1a"
 
-  #  associate_public_ip_address = true
-  subnet_id              = aws_subnet.xt-public-subnets[0].id
+  subnet_id = aws_subnet.xt-public-subnets[0].id
   vpc_security_group_ids = [
     aws_security_group.xt-web-sg.id
   ]
@@ -47,12 +45,13 @@ resource "aws_instance" "xt-be" {
   }
 }
 
+resource "aws_ec2_instance_state" "xt_be" {
+  instance_id = aws_instance.xt-be.id
+  state       = "stopped"
+}
+
 
 output "ec2_instance_be" {
-#  value = {
-#    dns_addresses = aws_instance.xt-be.*.public_dns
-#  }
-
   value = aws_instance.xt-be.public_dns
 }
 

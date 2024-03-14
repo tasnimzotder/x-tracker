@@ -1,22 +1,26 @@
 "use client";
 
-import { useToggle, upperFirst } from "@mantine/hooks";
+import { upperFirst, useToggle } from "@mantine/hooks";
 import { useForm } from "@mantine/form";
 import {
-  TextInput,
-  PasswordInput,
-  Text,
-  Paper,
-  Group,
-  PaperProps,
-  Button,
-  Divider,
-  Checkbox,
   Anchor,
+  Button,
+  Checkbox,
+  Divider,
+  Group,
+  Paper,
+  PasswordInput,
   Stack,
+  Text,
+  TextInput,
 } from "@mantine/core";
-import { authRequest_t, handleLogin } from "@/services/auth.service";
-import { useRouter } from "next/navigation";
+import {
+  authRequest_t,
+  handleLogin,
+  handleRegister,
+} from "@/services/auth.service";
+import { useAuth } from "@/contexts/authContext";
+
 // import { GoogleButton } from "./GoogleButton";
 // import { TwitterButton } from "./TwitterButton";
 
@@ -37,7 +41,7 @@ const AuthenticationForm = () => {
     },
   });
 
-  const router = useRouter();
+  const { login, register } = useAuth();
 
   const handleSubmit = async () => {
     const req: authRequest_t = {
@@ -52,11 +56,10 @@ const AuthenticationForm = () => {
     // console.log({ req });
 
     if (type === "login") {
-      let res = await handleLogin(req);
-      //
-      // if (res) {
-      //   router.push("/");
-      // }
+      // await handleLogin(req);
+      await login(req);
+    } else if (type === "register") {
+      await register(req);
     }
   };
 
@@ -65,11 +68,6 @@ const AuthenticationForm = () => {
       <Text size="lg" fw={500}>
         Welcome to xTracker, {type} with
       </Text>
-
-      {/*<Group grow mb="md" mt="md">*/}
-      {/*  <GoogleButton radius="xl">Google</GoogleButton>*/}
-      {/*  <TwitterButton radius="xl">Twitter</TwitterButton>*/}
-      {/*</Group>*/}
 
       <Divider label="Or continue with email" labelPosition="center" my="lg" />
 

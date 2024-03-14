@@ -18,18 +18,17 @@ SELECT * FROM users WHERE email = $1;
 UPDATE users
 SET
     username = $1,
-    hashed_password = $2,
-    email = $3,
-    updated_at = $4,
-    status = $5,
-    role = $6,
-    phone_number = $7,
-    country_code = $8,
-    first_name = $9,
-    last_name = $10,
-    postal_code = $11
+    email = $2,
+    updated_at = $3,
+    status = $4,
+    role = $5,
+    phone_number = $6,
+    country_code = $7,
+    first_name = $8,
+    last_name = $9,
+    postal_code = $10
 WHERE
-    id = $12 RETURNING *;
+    id = $11 RETURNING *;
 
 -- name: DeleteUser :exec
 DELETE FROM users WHERE id = $1;
